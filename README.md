@@ -40,7 +40,7 @@ Vouch Explorer reads public `VOUCHED.td` files live from GitHub and turns them i
 - **No database.** `VOUCHED.td` files come from `raw.githubusercontent.com` (outside the API rate limit), voucher names from each file's commit history, and people from GitHub code search. Results are cached with Next's `"use cache"` (Cache Components), in memory by default.
 - **Octokit**: code search, file history, users and contributions.
 - **Groq** (`gpt-oss-120b`): JSON-schema output, zod validation, one first-in-first-out queue, and abortable requests.
-- **Cytoscape.js** for the graph, **[Arc UI](https://uiarc.dev)** components and tokens (CSS modules, copied into `src/components/arc/`; Geist, Inter and Geist Mono; light and dark theme), **vitest** for tests.
+- **Cytoscape.js** for the graph, **[Arc UI](https://uiarc.dev)** components and tokens (CSS modules, copied into `src/components/arc/`; Outfit and Geist Mono; light and dark theme), **vitest** for tests.
 
 ## Instructions
 

@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist_Mono, Outfit } from "next/font/google";
 import Header from "@/components/Header";
 import Providers from "@/components/Providers";
 import "@/components/arc/foundation.css";
 import "./globals.css";
 
-const display = Geist({ subsets: ["latin"], variable: "--font-geist" });
-const body = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const sans = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
@@ -23,7 +22,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       lang="en"
       data-theme="light"
       data-accent="green"
-      className={`${display.variable} ${body.variable} ${mono.variable}`}
+      className={`${sans.variable} ${mono.variable}`}
       suppressHydrationWarning
     >
       <head>

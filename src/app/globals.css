@@ -8,6 +8,9 @@
  *   tables:   .table (wrap in .table-wrap for horizontal scroll on phones)
  */
 :root {
+  /* Outfit for headings and text (overrides Arc's Geist/Inter); handles and repo names stay in Geist Mono. */
+  --font-display: var(--font-outfit), sans-serif;
+  --font-body: var(--font-outfit), sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --page-max: 100%;
 }
