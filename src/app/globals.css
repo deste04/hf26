@@ -52,9 +52,24 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
   min-height: var(--control-height-md); padding: 0 var(--space-4); border: 1px solid var(--border);
   border-radius: var(--radius-control); background: var(--surface); color: var(--foreground);
-  font-weight: 500; text-decoration: none; transition: background-color var(--duration-fast) var(--ease-standard);
+  font-weight: 500; text-decoration: none; transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
-.link-btn:hover { background: var(--surface-muted); }
+.link-btn:hover { background: var(--surface-muted); border-color: var(--border-strong); }
+.link-btn:active { transform: scale(.98); }
+.link-btn svg { flex: none; }
+/* Two stacked arrows: on hover the first leaves along its direction while the second slides in behind it. */
+.link-btn-arrow { position: relative; display: inline-grid; width: 16px; height: 16px; overflow: hidden; margin-right: -2px; color: var(--text-secondary); }
+.link-btn-arrow svg { grid-area: 1 / 1; transition: transform 320ms var(--ease-standard); }
+.link-btn-arrow svg:last-child { transform: translateX(-100%); }
+.link-btn-arrow.is-external svg:last-child { transform: translate(-100%, 100%); }
+.link-btn:hover .link-btn-arrow, .link-btn:focus-visible .link-btn-arrow { color: var(--foreground); }
+.link-btn:hover .link-btn-arrow svg:first-child, .link-btn:focus-visible .link-btn-arrow svg:first-child { transform: translateX(100%); }
+.link-btn:hover .link-btn-arrow.is-external svg:first-child, .link-btn:focus-visible .link-btn-arrow.is-external svg:first-child { transform: translate(100%, -100%); }
+.link-btn:hover .link-btn-arrow svg:last-child, .link-btn:focus-visible .link-btn-arrow svg:last-child { transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .link-btn-arrow svg { transition: none; }
+  .link-btn:active { transform: none; }
+}
 .strong-link { font-weight: 500; }
 
 .mono { font-family: var(--font-mono); font-size: .92em; letter-spacing: 0; }
@@ -157,7 +172,6 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
   border-bottom-width: 2px; border-radius: 6px; color: var(--text-muted); font-family: var(--font-mono); font-size: var(--text-xs);
 }
 .search-bar-actions { display: flex; flex: none; gap: var(--space-2); margin-left: var(--space-1); }
-.search-bar-primary { order: 2; }
 /* Buttons follow the bar's curve: pills inside the pill, and on phones the bar's radius minus its padding. */
 .search-bar .search-bar-actions > * { border-radius: var(--radius-pill); }
 @media (max-width: 640px) {

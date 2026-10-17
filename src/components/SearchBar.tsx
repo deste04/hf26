@@ -1,17 +1,19 @@
 "use client";
 import { Search, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/arc/button/button";
 import { cleanQuery } from "@/lib/query";
 
 /**
  * Explore search: one bar that says what it understood (a person or a project) while you type.
- * Plain GET form underneath, so it works before hydration. "/" focuses it from anywhere on the page.
+ * Plain GET form underneath, so Map trust works before hydration; Show profile goes straight to /u/handle. "/" focuses it from anywhere on the page.
  */
 export function SearchBar({ defaultValue }: { defaultValue: string }) {
   const [value, setValue] = useState(defaultValue);
   const [focused, setFocused] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  const router = useRouter();
   const q = cleanQuery(value);
   const kind = !q ? null : q.includes("/") ? "project" : "person";
 
@@ -59,18 +61,17 @@ export function SearchBar({ defaultValue }: { defaultValue: string }) {
       ) : (
         !focused && <kbd className="search-bar-kbd" aria-hidden="true">/</kbd>
       )}
-      {/* Map trust comes first in the DOM so Enter submits it; CSS order puts it on the right. */}
       <div className="search-bar-actions">
-        <Button type="submit" className="search-bar-primary">Map trust</Button>
         <Button
-          type="submit"
+          type="button"
           variant="secondary"
-          formAction="/profile"
-          disabled={kind === "project"}
+          onClick={() => router.push(`/u/${encodeURIComponent(q)}`)}
+          disabled={kind !== "person"}
           title={kind === "project" ? "Profiles are for people; Map trust shows a project" : undefined}
         >
           Show profile
         </Button>
+        <Button type="submit">Map trust</Button>
       </div>
     </form>
   );

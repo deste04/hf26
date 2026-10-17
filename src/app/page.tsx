@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/arc/button/button";
 import { EmptyState } from "@/components/arc/empty-state/empty-state";
+import { GithubMark, LinkButton } from "@/components/LinkButton";
 import SampleChip from "@/components/SampleChip";
 import { SearchBar } from "@/components/SearchBar";
 import TrustGraph from "@/components/TrustGraph";
@@ -100,9 +101,9 @@ export default async function ExplorePage({ searchParams }: { searchParams: Prom
                   <div className="row">
                     <SampleChip show={anySeed} />
                     {result.kind === "user" ? (
-                      <Link className="link-btn" href={`/u/${encodeURIComponent(result.q)}`}>Open profile</Link>
+                      <LinkButton href={`/u/${encodeURIComponent(result.q)}`}>Open profile</LinkButton>
                     ) : (
-                      <a className="link-btn" href={`https://github.com/${result.q}`} target="_blank" rel="noreferrer">View on GitHub</a>
+                      <LinkButton href={`https://github.com/${result.q}`} external icon={<GithubMark />}>View on GitHub</LinkButton>
                     )}
                   </div>
                 </div>
@@ -126,7 +127,7 @@ export default async function ExplorePage({ searchParams }: { searchParams: Prom
                 <EmptyState
                   title={`@${q} isn't in any vouch list`}
                   description="No indexed VOUCHED.td lists this handle. Their public GitHub activity is still on their profile."
-                  action={<Link className="link-btn" href={`/u/${encodeURIComponent(q)}`}>Open @{q}&apos;s profile</Link>}
+                  action={<LinkButton href={`/u/${encodeURIComponent(q)}`}>Open @{q}&apos;s profile</LinkButton>}
                 />
               ) : (
                 <EmptyState

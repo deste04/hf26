@@ -20,8 +20,6 @@ Vouch Explorer indexes public `VOUCHED.td` files and connects them into one trus
 | --- | --- |
 | **Explore** `/` | Trust graph for a GitHub user or an `owner/repo`. Solid green edges mean vouched; denounced users are highlighted in red on their own inner ring; dashed edges mean the voucher is unknown. Edge labels name the voucher, taken from git history and never guessed. Click a node to re-centre on it; fullscreen and fit buttons; a "Show profile" button. |
 | **Profile** `/u/:handle` | AI contribution brief, built from public PRs, reviews and issues, with every strength linked to evidence. A separate box states the vouch-list facts, generated from the database rather than by the model (for example "Denounced in 7 indexed projects with the note “Bad AI etiquette”"). Activity table per project. **Never a score.** |
-| **Requests** `/requests` | Maintainer inbox. The model runs factual checks (✓ or !) with evidence and drafts a reply you can edit. The human clicks **Vouch**, **Ask for more info** or **Denounce…** (Denounce asks for confirmation). Decisions are stored in the database only; nothing is written to GitHub. |
-| **Discover** `/discover` | Enter your skills and weekly hours. The model ranks indexed Vouch projects with a fit word (strong, good or stretch), a one-line reason and good-first issues. |
 
 **AI queue.** A header panel lists every model job, running or queued, with a **Cancel** button. Cancelling aborts the request, and closing a profile cancels its brief automatically.
 
@@ -79,11 +77,7 @@ Ground rule: demo on our own accounts. `slopmaster3000` is fictional.
 2. **A big project:** [`/?q=ghostty-org/ghostty`](http://localhost:3000/?q=ghostty-org/ghostty). 377 users, with the 24 denounced on the orange inner ring. Click **Fullscreen**.
 3. **Mixed trust:** [`/?q=jamesarch`](http://localhost:3000/?q=jamesarch). Vouched in 5 projects and denounced in 7. Click any node to re-centre the graph on it.
 4. **Profile:** [`/u/jamesarch`](http://localhost:3000/u/jamesarch). The vouch-list facts (from data) sit beside the AI brief, whose evidence links go to real PRs.
-5. **Requests:** [`/requests`](http://localhost:3000/requests) on `Calonca/success-cli`.
-   - Demo requests from deste04, fabianhogger and slopmaster3000.
-   - The model's checks show ✓ or !, with a draft reply. Click Vouch, Ask for more info or Denounce….
-6. **Discover:** [`/discover`](http://localhost:3000/discover) with the default query "TypeScript, React, writing docs" and "About 3 hours".
-7. **AI queue:** open a few uncached profiles, open the **AI queue** panel, and cancel a job.
+5. **AI queue:** open a few uncached profiles, open the **AI queue** panel, and cancel a job.
 
 ## Original contribution
 
@@ -100,7 +94,7 @@ Ground rule: demo on our own accounts. `slopmaster3000` is fictional.
 - **Canonical-path filtering.** We found 54 repos whose "list" was a vendored copy or template, such as `vendor/ghostty/.github/VOUCHED.td`. Those copies credited ghostty's trust decisions to unrelated repos. Only `VOUCHED.td` and `.github/VOUCHED.td` are indexed now.
 - **The trust graph.** Its size adapts to the number of nodes, denounced users are highlighted, and it has fullscreen and click-to-explore.
 - **Grounded AI.**
-  - Contribution briefs, request triage and project matching use an LLM under strict prompts.
+  - Contribution briefs use an LLM under strict prompts.
   - Evidence comes from IDs that map back to input URLs.
   - Vouch-list facts are generated from data, never by the model.
   - There are no scores.

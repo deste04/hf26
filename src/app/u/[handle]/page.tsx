@@ -3,6 +3,7 @@ import { Avatar } from "@/components/arc/avatar/avatar";
 import { Badge } from "@/components/arc/badge/badge";
 import { BriefCard } from "@/components/BriefCard";
 import { ContributionHeatmap } from "@/components/ContributionHeatmap";
+import { GithubMark, LinkButton } from "@/components/LinkButton";
 import { SampleChip } from "@/components/SampleChip";
 import { getProfileData } from "@/server/actions/pages";
 import "./profile.css";
@@ -77,9 +78,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ handle
           )}
         </div>
 
-        <a href={`https://github.com/${data.login}`} target="_blank" rel="noreferrer" className="link-btn">
-          View on GitHub →
-        </a>
+        <LinkButton href={`https://github.com/${data.login}`} external icon={<GithubMark />}>
+          View on GitHub
+        </LinkButton>
         {anySeed && <SampleChip show />}
         {data.githubError && <p className="muted small">GitHub unavailable; showing cached data where possible.</p>}
       </aside>
