@@ -45,8 +45,8 @@ export function BriefCard({ login }: { login: string }) {
 
       {loading && (
         <div className="stack">
-          <Skeleton label="Gemma is writing the brief" lines={3} />
-          <p className="muted small">Gemma is reading public activity…</p>
+          <Skeleton label="AI is writing the brief" lines={3} />
+          <p className="muted small">Reading public activity…</p>
         </div>
       )}
       {!loading && q.error && (

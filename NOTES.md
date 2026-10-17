@@ -14,7 +14,7 @@
 The model call is isolated so it can move client-side without touching prompts, validation or caching:
 
 - `src/server/ai/tasks.ts`: model-agnostic. `prepareBrief / prepareTriage / prepareDiscover` build the input + prompt + zod schema; `complete()` does JSON.parse → zod → drops any URL not present in the input → caches in `ai_briefs` keyed by `(subject_type, subject_key, model, prompt_version)`.
-- `src/server/ai/ollamaRunner.ts`: the **only** Ollama code (`generate(system, prompt, jsonSchema)`). Delete it, and `runOnServer` / `getBrief|getTriage|getMatches`, once the browser path is wired.
+- `src/server/ai/groqRunner.ts`: the **only** model-provider code (`generate(system, prompt, jsonSchema)`, Groq's OpenAI-compatible API). Delete it, and `runOnServer` / `getBrief|getTriage|getMatches`, once the browser path is wired.
 - Browser flow (server actions in `src/server/actions/ai.ts`):
   1. `prepareAi(task, model, force?)` → `{ cached }` (show it) or `{ spec: { system, prompt, jsonSchema } }`
   2. run the in-browser model with `spec` (constrain to `jsonSchema` if the runtime supports it)

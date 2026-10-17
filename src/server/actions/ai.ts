@@ -1,5 +1,5 @@
 "use server";
-import { SERVER_MODEL } from "../ai/ollamaRunner";
+import { SERVER_MODEL } from "../ai/groqRunner";
 import {
   cachedResult,
   complete,
@@ -15,7 +15,7 @@ import {
   type PromptSpec,
 } from "../ai/tasks";
 
-// --- Server-side model (Ollama today) ---
+// --- Server-side model (Groq today) ---
 
 export async function getBrief(login: string, force = false) {
   return contributionBrief(login, force);

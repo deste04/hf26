@@ -1,12 +1,12 @@
 // AI tasks, independent of where the model runs. Each task is split in two server-side halves:
 //   prepare → input from DB/GitHub cache + system prompt + user prompt + JSON schema
 //   complete → JSON.parse + zod + drop URLs not in the input + cache in ai_briefs
-// The model call in between happens either on the server (ollamaRunner.ts) or in the
+// The model call in between happens either on the server (groqRunner.ts) or in the
 // browser (prepareAi/submitAi actions). The AI explains, humans decide: no scores.
 import { z } from "zod";
 import { briefsRepo, projectsRepo, requestsRepo, trustRepo } from "../../db/repo";
 import { userContributions, type Contribution } from "../github";
-import { generate, SERVER_MODEL } from "./ollamaRunner";
+import { generate, SERVER_MODEL } from "./groqRunner";
 import { enqueue } from "./queue";
 
 export const PROMPT_VERSIONS = {

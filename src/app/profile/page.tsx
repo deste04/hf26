@@ -20,7 +20,7 @@ export default async function ProfileLookup({ searchParams }: { searchParams: Pr
     <div className="container">
       <section className="hero">
         <h1>Look up a contributor</h1>
-        <p>Public GitHub activity, vouch entries and a Gemma brief for any GitHub handle.</p>
+        <p>Public GitHub activity, vouch entries and an AI brief for any GitHub handle.</p>
         <form className="search-form" action="/profile" method="get" role="search">
           <Input id="q" name="q" label="GitHub handle" placeholder="e.g. @deste04" autoComplete="off" required />
           <Button type="submit">Show profile</Button>

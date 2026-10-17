@@ -14,26 +14,26 @@
 
 ## Solution
 
-Vouch Explorer indexes public `VOUCHED.td` files and connects them into one trust graph. Gemma 4 explains the evidence, and a human makes the decision.
+Vouch Explorer indexes public `VOUCHED.td` files and connects them into one trust graph. An LLM explains the evidence, and a human makes the decision.
 
 | Screen | What it does |
 | --- | --- |
 | **Explore** `/` | Trust graph for a GitHub user or an `owner/repo`. Solid green edges mean vouched; denounced users are highlighted in red on their own inner ring; dashed edges mean the voucher is unknown. Edge labels name the voucher, taken from git history and never guessed. Click a node to re-centre on it; fullscreen and fit buttons; a "Show profile" button. |
-| **Profile** `/u/:handle` | Gemma's contribution brief, built from public PRs, reviews and issues, with every strength linked to evidence. A separate box states the vouch-list facts, generated from the database rather than by the model (for example "Denounced in 7 indexed projects with the note “Bad AI etiquette”"). Activity table per project. **Never a score.** |
-| **Requests** `/requests` | Maintainer inbox. Gemma runs factual checks (✓ or !) with evidence and drafts a reply you can edit. The human clicks **Vouch**, **Ask for more info** or **Denounce…** (Denounce asks for confirmation). Decisions are stored in the database only; nothing is written to GitHub. |
-| **Discover** `/discover` | Enter your skills and weekly hours. Gemma ranks indexed Vouch projects with a fit word (strong, good or stretch), a one-line reason and good-first issues. |
+| **Profile** `/u/:handle` | AI contribution brief, built from public PRs, reviews and issues, with every strength linked to evidence. A separate box states the vouch-list facts, generated from the database rather than by the model (for example "Denounced in 7 indexed projects with the note “Bad AI etiquette”"). Activity table per project. **Never a score.** |
+| **Requests** `/requests` | Maintainer inbox. The model runs factual checks (✓ or !) with evidence and drafts a reply you can edit. The human clicks **Vouch**, **Ask for more info** or **Denounce…** (Denounce asks for confirmation). Decisions are stored in the database only; nothing is written to GitHub. |
+| **Discover** `/discover` | Enter your skills and weekly hours. The model ranks indexed Vouch projects with a fit word (strong, good or stretch), a one-line reason and good-first issues. |
 
-**AI queue.** A header panel lists every model job, running or queued, with a **Cancel** button. Cancelling stops Ollama mid-generation, and closing a profile cancels its brief automatically.
+**AI queue.** A header panel lists every model job, running or queued, with a **Cancel** button. Cancelling aborts the request, and closing a profile cancels its brief automatically.
 
 **AI explains, humans decide**
 - No auto-vouch, no auto-denounce, and no numeric reputation score anywhere.
 - Every prompt says: *use only the data provided; if evidence is missing, say so; do not rate or score the person; do not recommend vouching or denouncing.*
-- Output is constrained by a JSON schema (Ollama's `format` option) and validated with zod.
+- Output is constrained by a JSON schema (Groq's `response_format: json_schema`) and validated with zod.
 - The model cites short IDs (`c3`, `a1`, `i42`) rather than URLs, and the server maps them back to real input URLs, so every evidence link is grounded by construction.
-- Results are cached in SQLite (`ai_briefs`), so a pre-warmed demo works with Ollama stopped.
+- Results are cached in SQLite (`ai_briefs`), so a pre-warmed demo works offline.
 - **Public data only:** public `VOUCHED.td` files and public GitHub activity.
 
-**Model: Gemma 4** (`gemma4:e2b-it-qat`, 4.3 GB; any Gemma 4 tag works via `OLLAMA_MODEL`). It's open-weight and runs **locally via [Ollama](https://ollama.com)** under the [Gemma Terms of Use](https://ai.google.dev/gemma/terms). No data leaves your machine for inference.
+**Model: `openai/gpt-oss-120b` on [Groq](https://groq.com)** (any Groq model with JSON-schema output works via `GROQ_MODEL`). Prompts contain only public GitHub data and are sent to Groq's API for inference.
 
 ## Stack
 
@@ -45,17 +45,14 @@ Vouch Explorer indexes public `VOUCHED.td` files and connects them into one trus
   - The schema is portable: JSON stored as text, ISO-8601 timestamps, and no views (`trust_edges` is a query in the repo layer).
 - **Octokit**: code search, repo metadata, file history and contributions. Every GitHub response is cached in the database.
 - **Lakebase Postgres on Neon** (optional): a read-only *shared* trust index merged into Explore, so the graph is not limited to this machine's crawl. Written by a separate process (`npm run crawl:shared`); unset `NEON_DATABASE_URL` and the app runs on SQLite alone.
-- **Ollama + Gemma 4**: JSON-schema output, zod validation, one first-in-first-out queue, and abortable requests.
+- **Groq** (`gpt-oss-120b`): JSON-schema output, zod validation, one first-in-first-out queue, and abortable requests.
 - **Cytoscape.js** for the graph, **[Arc UI](https://uiarc.dev)** components and tokens (CSS modules, copied into `src/components/arc/`; Geist, Inter and Geist Mono; light and dark theme), **vitest** for tests.
 - `npm audit`: **0 production vulnerabilities**. The 4 moderate findings are dev-only, from `drizzle-kit`'s bundled esbuild.
 
 ## Instructions
 
 ```bash
-ollama pull gemma4:e2b-it-qat
-OLLAMA_IGPU_ENABLE=1 ollama serve   # optional: lets Ollama use an AMD/Intel integrated GPU (~2x faster on a Radeon 860M)
-
-cp .env.example .env                # GITHUB_TOKEN (falls back to `gh auth token`), OLLAMA_MODEL, DATABASE_URL, NEXT_PUBLIC_DEMO_USER
+cp .env.example .env                # GROQ_API_KEY, GITHUB_TOKEN (falls back to `gh auth token`), DATABASE_URL, NEXT_PUBLIC_DEMO_USER
 npm ci
 npm run db:push                     # create tables
 npm run db:seed                     # demo vouch requests on a real repo (labelled "Demo request")
@@ -81,10 +78,10 @@ Ground rule: demo on our own accounts. `slopmaster3000` is fictional.
 1. **Our own repo dogfoods Vouch:** [`/?q=Calonca/hf26`](http://localhost:3000/?q=Calonca/hf26). The team is vouched in `.github/VOUCHED.td`, and the edges read "by @Calonca", taken from the repo's git history.
 2. **A big project:** [`/?q=ghostty-org/ghostty`](http://localhost:3000/?q=ghostty-org/ghostty). 377 users, with the 24 denounced on the orange inner ring. Click **Fullscreen**.
 3. **Mixed trust:** [`/?q=jamesarch`](http://localhost:3000/?q=jamesarch). Vouched in 5 projects and denounced in 7. Click any node to re-centre the graph on it.
-4. **Profile:** [`/u/jamesarch`](http://localhost:3000/u/jamesarch). The vouch-list facts (from data) sit beside Gemma's brief, whose evidence links go to real PRs.
+4. **Profile:** [`/u/jamesarch`](http://localhost:3000/u/jamesarch). The vouch-list facts (from data) sit beside the AI brief, whose evidence links go to real PRs.
 5. **Requests:** [`/requests`](http://localhost:3000/requests) on `Calonca/success-cli`.
    - Demo requests from deste04, fabianhogger and slopmaster3000.
-   - Gemma's checks show ✓ or !, with a draft reply. Click Vouch, Ask for more info or Denounce….
+   - The model's checks show ✓ or !, with a draft reply. Click Vouch, Ask for more info or Denounce….
 6. **Discover:** [`/discover`](http://localhost:3000/discover) with the default query "TypeScript, React, writing docs" and "About 3 hours".
 7. **AI queue:** open a few uncached profiles, open the **AI queue** panel, and cancel a job.
 
@@ -103,7 +100,7 @@ Ground rule: demo on our own accounts. `slopmaster3000` is fictional.
 - **Canonical-path filtering.** We found 54 repos whose "list" was a vendored copy or template, such as `vendor/ghostty/.github/VOUCHED.td`. Those copies credited ghostty's trust decisions to unrelated repos. Only `VOUCHED.td` and `.github/VOUCHED.td` are indexed now.
 - **The trust graph.** Its size adapts to the number of nodes, denounced users are highlighted, and it has fullscreen and click-to-explore.
 - **Grounded AI.**
-  - Contribution briefs, request triage and project matching use Gemma 4 under strict prompts.
+  - Contribution briefs, request triage and project matching use an LLM under strict prompts.
   - Evidence comes from IDs that map back to input URLs.
   - Vouch-list facts are generated from data, never by the model.
   - There are no scores.

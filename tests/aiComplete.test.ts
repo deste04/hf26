@@ -8,7 +8,8 @@ import { z } from "zod";
 // Point the DB at a throwaway file before anything imports the client.
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vouch-test-"));
 process.env.DATABASE_URL = `file:${path.join(dir, "test.db")}`;
-process.env.OLLAMA_HOST = "http://127.0.0.1:1"; // unreachable on purpose
+process.env.GROQ_BASE_URL = "http://127.0.0.1:1"; // unreachable on purpose
+process.env.GROQ_API_KEY = "test";
 
 type Tasks = typeof import("../src/server/ai/tasks");
 let tasks: Tasks;
@@ -62,7 +63,7 @@ describe("AI output handling", () => {
 
   it("serves from cache without the model, and reports model_unavailable otherwise", async () => {
     const hit = await tasks.runOnServer({ ...prepared() }, false);
-    // cached under SERVER_MODEL? Only "m" was cached, so the server model misses → unreachable Ollama
+    // cached under SERVER_MODEL? Only "m" was cached, so the server model misses → unreachable model API
     expect(hit).toMatchObject({ ok: false, error: { code: "model_unavailable" } });
   });
 });

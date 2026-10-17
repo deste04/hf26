@@ -21,7 +21,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
         {current && <span className="mono muted">maintainer view · {current.full_name}</span>}
       </div>
       <p className="muted small">
-        Signed in as <span className="mono">{me.login}</span> (demo). Gemma summarises, you decide.
+        Signed in as <span className="mono">{me.login}</span> (demo). AI summarises, you decide.
       </p>
       {projects.length === 0 ? (
         <p className="muted">

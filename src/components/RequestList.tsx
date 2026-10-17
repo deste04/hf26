@@ -144,17 +144,17 @@ function RequestDetail({
 
       <div className="req-brief">
         <div className="req-brief-head">
-          <h3>Gemma brief</h3>
+          <h3>AI brief</h3>
           <Badge tone="info" size="sm">public data · local model</Badge>
           <Button variant="ghost" size="sm" onClick={() => regen.mutate()} disabled={loading} loading={regen.isPending}>
             Re-check
           </Button>
         </div>
         {loading && (
-          <div className="req-checks" aria-busy="true" aria-label="Gemma is checking the request">
+          <div className="req-checks" aria-busy="true" aria-label="AI is checking the request">
             {[0, 1, 2, 3].map((i) => (
               <div key={i} className="req-check">
-                <Skeleton label="Gemma is checking the request" lines={1} />
+                <Skeleton label="AI is checking the request" lines={1} />
               </div>
             ))}
           </div>

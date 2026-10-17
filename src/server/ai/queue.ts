@@ -1,4 +1,4 @@
-// In-memory FIFO for model calls: Ollama runs one request at a time anyway, so queueing here
+// In-memory FIFO for model calls: one request at a time keeps us inside Groq's rate limits, and queueing here
 // lets the UI show what is waiting and cancel any job (queued or running).
 export type JobState = "queued" | "running";
 export type JobView = { id: number; label: string; state: JobState; position: number; createdAt: string; startedAt: string | null };

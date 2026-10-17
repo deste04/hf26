@@ -1,5 +1,5 @@
 // Brief generation as a route handler (not a server action) so it can be cancelled:
-// when the browser aborts the fetch (profile closed), request.signal aborts the Ollama call.
+// when the browser aborts the fetch (profile closed), request.signal aborts the model call.
 import { contributionBrief } from "@/server/ai/tasks";
 
 export const dynamic = "force-dynamic";
