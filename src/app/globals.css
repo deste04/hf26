@@ -175,6 +175,13 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
   border-bottom-width: 2px; border-radius: 6px; color: var(--text-muted); font-family: var(--font-mono); font-size: var(--text-xs);
 }
 .search-bar-actions { display: flex; flex: none; gap: var(--space-2); margin-left: var(--space-1); }
+/* Icons on the bar's buttons move on hover or keyboard focus: the profile figure lifts and tilts, the map's
+   waypoints turn a quarter lap with a little overshoot. A disabled button stays still. */
+.search-bar-actions .sb-icon { flex: none; transition: transform var(--duration-spring) var(--ease-spring); }
+.search-bar-actions button:not(:disabled):is(:hover, :focus-visible) .sb-icon.is-profile { transform: translateY(-2px) rotate(-8deg); }
+.search-bar-actions button:not(:disabled):is(:hover, :focus-visible) .sb-icon.is-map { transform: rotate(90deg) scale(1.08); }
+.search-bar-actions button:not(:disabled):active .sb-icon { transform: scale(.9); }
+@media (prefers-reduced-motion: reduce) { .search-bar-actions .sb-icon { transition: none; transform: none !important; } }
 /* Buttons follow the bar's curve: pills inside the pill, and on phones the bar's radius minus its padding. */
 .search-bar .search-bar-actions > * { border-radius: var(--radius-pill); }
 @media (max-width: 640px) {

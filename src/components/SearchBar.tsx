@@ -1,5 +1,5 @@
 "use client";
-import { Search, X } from "lucide-react";
+import { Search, UserRound, Waypoints, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/arc/button/button";
@@ -31,7 +31,17 @@ export function SearchBar({ defaultValue }: { defaultValue: string }) {
   }, []);
 
   return (
-    <form className="search-bar" action="/" method="get" role="search" data-focused={focused || undefined}>
+    <form
+      className="search-bar"
+      action="/"
+      method="get"
+      role="search"
+      data-focused={focused || undefined}
+      // Nothing to map yet: Enter in an empty field does nothing, like the disabled button.
+      onSubmit={(e) => {
+        if (!q) e.preventDefault();
+      }}
+    >
       <label htmlFor="q" className="sr-only">GitHub handle or project</label>
       <Search className="search-bar-icon" size={18} aria-hidden="true" />
       <input
@@ -69,9 +79,13 @@ export function SearchBar({ defaultValue }: { defaultValue: string }) {
           disabled={kind !== "person"}
           title={kind === "project" ? "Profiles are for people; Map trust shows a project" : undefined}
         >
-          Show profile
+          <UserRound className="sb-icon is-profile" size={16} aria-hidden="true" />
+          <span>Show profile</span>
         </Button>
-        <Button type="submit">Map trust</Button>
+        <Button type="submit" disabled={!q} title={q ? undefined : "Type a GitHub handle or owner/repo first"}>
+          <Waypoints className="sb-icon is-map" size={16} aria-hidden="true" />
+          <span>Map trust</span>
+        </Button>
       </div>
     </form>
   );
