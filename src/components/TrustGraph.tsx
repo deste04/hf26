@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import type { TrustEdge } from "@/server/trust/types";
 
 /** `activity`: person view only, repos the person contributed to without being in their VOUCHED.td. */
-type Props = { center: { kind: "user" | "project"; id: string }; edges: TrustEdge[]; activity?: string[] };
+/** `vouchersPending`: vouchers are still being read, so a missing one means "not yet", not "unknown". */
+type Props = { center: { kind: "user" | "project"; id: string }; edges: TrustEdge[]; activity?: string[]; vouchersPending?: boolean };
 
 // Cytoscape draws on canvas and cannot read CSS variables (or oklch), so Arc tokens are resolved to rgb.
 const TOKENS = {
@@ -51,7 +52,7 @@ function tier(n: number) {
   return { height: 640, maxZoom: 1.1, font: 10, pad: 4, ring: 48, spacing: 8, edge: 1 };
 }
 
-export default function TrustGraph({ center, edges, activity = [] }: Props) {
+export default function TrustGraph({ center, edges, activity = [], vouchersPending = false }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<import("cytoscape").Core | null>(null);
@@ -200,10 +201,10 @@ export default function TrustGraph({ center, edges, activity = [] }: Props) {
             id: `e${i}`,
             source,
             target,
-            label: edges.length > 30 ? "" : e.voucher ? `by @${e.voucher}` : "unknown",
+            label: edges.length > 30 ? "" : e.voucher ? `by @${e.voucher}` : vouchersPending ? "" : "unknown",
             // Denounced stays red even with an unknown voucher (dashed); unknown vouches are dashed grey.
             hasVoucher: e.voucher ? 1 : 0,
-            style: e.voucher ? "solid" : "dashed",
+            style: e.voucher || vouchersPending ? "solid" : "dashed",
             status: e.status,
           },
         });
@@ -263,7 +264,7 @@ export default function TrustGraph({ center, edges, activity = [] }: Props) {
       cyRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [center.kind, center.id, edges, activity, router]);
+  }, [center.kind, center.id, edges, activity, vouchersPending, router]);
 
   return (
     <div ref={wrapRef} className={`graph-wrap${fullscreen ? " is-fullscreen" : ""}`}>

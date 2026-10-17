@@ -2,7 +2,7 @@
 import { cleanQuery } from "../../lib/query";
 import { repoActivity } from "../github";
 import type { TrustEdge } from "../trust/types";
-import { projectEdges, userEdges } from "../vouch";
+import { attributeEdges, projectEdges, userListings } from "../vouch";
 
 export type ExploreResult = {
   kind: "user" | "project";
@@ -26,15 +26,21 @@ export async function exploreSearch(raw: string): Promise<ExploreResult> {
       issue = "unavailable";
     }
   } else {
-    const u = await userEdges(q);
+    // Vouchers are left out here (see vouchersFor) so the map can draw before the slow blame reads finish.
+    const u = await userListings(q);
     if (u.status === "ok") edges = u.edges;
     else issue = u.status;
   }
   return { kind, q, edges, issue };
 }
 
+/** Person search: the same entries with their vouchers, for the page to swap in when ready. */
+export async function vouchersFor(login: string, edges: TrustEdge[]): Promise<TrustEdge[]> {
+  return attributeEdges(cleanQuery(login), edges);
+}
+
 /**
- * Repos a person contributed to in the last year without a vouch list entry there, busiest first. Separate from
+ * Repos a person ever contributed to without a vouch list entry there, busiest first. Separate from
  * exploreSearch so the page can draw the trust graph first and add these when they arrive.
  */
 export async function activityOnly(login: string, edges: TrustEdge[]): Promise<string[]> {

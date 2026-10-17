@@ -83,38 +83,21 @@ function SectionSkeleton({ title, label }: { title: string; label: string }) {
   );
 }
 
-/** Badges and denouncements. Shown only when the vouch lists could be searched: an unknown is never "not vouched". */
+/** Vouch badges. Shown only when the vouch lists could be searched: an unknown is never "not vouched". */
 async function TrustSummary({ login }: { login: string }) {
   const { trust, edges, rows } = await profileActivity(login);
   if (trust.status !== "ok") return null;
   const vouched = edges.filter((e) => e.status === "vouched").length;
-  const denounced = edges.filter((e) => e.status === "denounced");
+  const denounced = edges.filter((e) => e.status === "denounced").length;
   // Repos with activity but no entry in their VOUCHED.td.
   const notVouched = rows.filter((r) => !r.vouch).length;
+  // The projects themselves are in the activity table (Vouch column); the card keeps only the counts.
   return (
-    <>
-      <div className="profile-pills">
-        <Badge tone="success">Vouched in {vouched} project{plural(vouched)}</Badge>
-        {notVouched > 0 && <Badge tone="neutral">Not vouched in {notVouched} repo{plural(notVouched)}</Badge>}
-        {denounced.length > 0 && <Badge tone="danger">Denounced in {denounced.length}</Badge>}
-      </div>
-      {/* Which projects vouch is in the activity table; only denouncements, with the maintainers' notes, are listed here. */}
-      {denounced.length > 0 && (
-        <div className="profile-vouchers">
-          <span className="profile-label">Denounced in</span>
-          <ul>
-            {denounced.map((e) => (
-              <li key={e.project}>
-                <Link href={`/?q=${encodeURIComponent(e.project)}`} className="mono">
-                  {e.project}
-                </Link>
-                {e.note && <span className="muted small"> — “{e.note}”</span>}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </>
+    <div className="profile-pills">
+      <Badge tone="success">Vouched in {vouched} project{plural(vouched)}</Badge>
+      {notVouched > 0 && <Badge tone="neutral">Not vouched in {notVouched} repo{plural(notVouched)}</Badge>}
+      {denounced > 0 && <Badge tone="danger">Denounced in {denounced}</Badge>}
+    </div>
   );
 }
 
@@ -136,7 +119,7 @@ async function ActivitySection({ login }: { login: string }) {
     <section className="card profile-section" aria-labelledby="activity-title">
       <div className="activity-head">
         <h2 id="activity-title">Activity by project</h2>
-        <span className="muted small">{period === "last year" ? "Last year, every repo" : "Recent activity"}</span>
+        <span className="muted small">{period === "all years" ? "Every repo, all years" : "Recent activity"}</span>
       </div>
       {rows.length === 0 ? (
         <p className="muted">{error ? "GitHub isn't answering right now." : "No public activity found."}</p>

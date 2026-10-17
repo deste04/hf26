@@ -1,12 +1,12 @@
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/arc/skeleton/skeleton";
 import { ExploreEmpty } from "@/components/ExploreEmpty";
 import { GithubMark, LinkButton } from "@/components/LinkButton";
 import { SearchBar } from "@/components/SearchBar";
-import { ActivityCount, ResultGraph } from "@/components/ResultGraph";
-import { TrustTable } from "@/components/TrustTable";
+import { ActivityCount, ResultView } from "@/components/ResultGraph";
 import { cleanQuery } from "@/lib/query";
-import { activityOnly, exploreSearch, type ExploreResult } from "@/server/actions/explore";
+import { activityOnly, exploreSearch, vouchersFor, type ExploreResult } from "@/server/actions/explore";
 
 const fmt = (n: number) => n.toLocaleString("en-US");
 const plural = (n: number, one: string, other: string) => `${fmt(n)} ${n === 1 ? one : other}`;
@@ -51,45 +51,55 @@ async function HeroSearch({ searchParams }: { searchParams: Search }) {
 
 async function Results({ searchParams }: { searchParams: Search }) {
   const q = cleanQuery((await searchParams).q ?? "");
+  // Live GitHub reads for whatever was searched: rendered per request, never prerendered.
+  await connection();
   if (!q) return <ExploreEmpty scene="search" title="Search a person or a project" line="Try @handle or owner/repo." />;
   const result = await exploreSearch(q);
-  // Started now, awaited by the graph and the header count as it streams: the trust graph does not wait for it.
-  const activity = result.kind === "user" && !result.issue ? activityOnly(result.q, result.edges) : Promise.resolve([]);
+  const person = result.kind === "user" && !result.issue;
+  // Started now and handed to the page as promises: the map draws from the entries alone and fills these in later.
+  const vouchers = person && result.edges.length > 0 ? vouchersFor(result.q, result.edges) : null;
+  const activity = person ? activityOnly(result.q, result.edges) : Promise.resolve([]);
   // No vouch entries: the graph has only activity to show, so this one case waits for it.
   if (result.edges.length === 0 && (await activity).length === 0) return <NoResult result={result} />;
 
   const title = result.kind === "user" ? `@${result.q}` : result.q;
   const vouched = result.edges.filter((e) => e.status === "vouched").length;
   const denounced = result.edges.length - vouched;
-  return (
-    <>
-      <div className="card">
-        <div className="card-head">
-          <div className="result-head">
-            <h2>
-              <span className={result.kind === "project" ? "mono" : undefined}>{title}</span>
-            </h2>
-            <span className="muted small">
-              {result.kind === "user"
-                ? `Listed in ${plural(result.edges.length, "project", "projects")}`
-                : plural(result.edges.length, "listed user", "listed users")}
-              {vouched > 0 && <> · <span className="tone-success">{fmt(vouched)} vouched</span></>}
-              {denounced > 0 && <> · <span className="tone-danger">{fmt(denounced)} denounced</span></>}
-              <Suspense fallback={null}>
-                <ActivityCount activity={activity} />
-              </Suspense>
-            </span>
-          </div>
-          {result.kind === "user" ? (
-            <LinkButton href={`/u/${encodeURIComponent(result.q)}`}>Open profile</LinkButton>
-          ) : (
-            <LinkButton href={`https://github.com/${result.q}`} external icon={<GithubMark />}>View on GitHub</LinkButton>
-          )}
-        </div>
-        <ResultGraph center={{ kind: result.kind, id: result.q }} edges={result.edges} activity={activity} />
+  const header = (
+    <div className="card-head">
+      <div className="result-head">
+        <h2>
+          <span className={result.kind === "project" ? "mono" : undefined}>{title}</span>
+        </h2>
+        <span className="muted small">
+          {result.kind === "user"
+            ? `Listed in ${plural(result.edges.length, "project", "projects")}`
+            : plural(result.edges.length, "listed user", "listed users")}
+          {vouched > 0 && <> · <span className="tone-success">{fmt(vouched)} vouched</span></>}
+          {denounced > 0 && <> · <span className="tone-danger">{fmt(denounced)} denounced</span></>}
+          <Suspense fallback={null}>
+            <ActivityCount activity={activity} />
+          </Suspense>
+        </span>
       </div>
-      {result.edges.length > 0 && <TrustTable kind={result.kind} edges={result.edges} />}
-    </>
+      {result.kind === "user" ? (
+        <LinkButton href={`/u/${encodeURIComponent(result.q)}`}>Open profile</LinkButton>
+      ) : (
+        <LinkButton href={`https://github.com/${result.q}`} external icon={<GithubMark />}>View on GitHub</LinkButton>
+      )}
+    </div>
+  );
+  return (
+    // Keyed by the query: clicking a node navigates client-side, and React would otherwise reuse the previous
+    // search's component, still holding its vouchers, activity and table filters until the new ones arrive.
+    <ResultView
+      key={`${result.kind}:${result.q.toLowerCase()}`}
+      header={header}
+      center={{ kind: result.kind, id: result.q }}
+      edges={result.edges}
+      vouchers={vouchers}
+      activity={activity}
+    />
   );
 }
 

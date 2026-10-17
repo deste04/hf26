@@ -9,7 +9,7 @@ type Status = "all" | "vouched" | "denounced";
 const PAGE = 50;
 
 /** Entries behind the trust graph, with a status filter and a text filter. Empty columns are left out. */
-export function TrustTable({ kind, edges }: { kind: "user" | "project"; edges: TrustEdge[] }) {
+export function TrustTable({ kind, edges, vouchersPending = false }: { kind: "user" | "project"; edges: TrustEdge[]; vouchersPending?: boolean }) {
   const [status, setStatus] = useState<Status>("all");
   const [text, setText] = useState("");
   const [limit, setLimit] = useState(PAGE);
@@ -30,7 +30,7 @@ export function TrustTable({ kind, edges }: { kind: "user" | "project"; edges: T
         (!needle || [e.project, e.login, e.voucher ?? "", e.note ?? ""].some((v) => v.toLowerCase().includes(needle))),
     );
   }, [edges, status, text]);
-  const showVoucher = edges.some((e) => e.voucher);
+  const showVoucher = vouchersPending || edges.some((e) => e.voucher);
   const showNote = edges.some((e) => e.note);
   const subject = kind === "user" ? "Project" : "User";
 
@@ -88,7 +88,15 @@ export function TrustTable({ kind, edges }: { kind: "user" | "project"; edges: T
                     </Badge>
                   </td>
                   {showVoucher && (
-                    <td>{e.voucher ? <Link href={`/u/${encodeURIComponent(e.voucher)}`}>@{e.voucher}</Link> : <span className="muted">unknown</span>}</td>
+                    <td>
+                      {e.voucher ? (
+                        <Link href={`/u/${encodeURIComponent(e.voucher)}`}>@{e.voucher}</Link>
+                      ) : vouchersPending ? (
+                        <span className="muted" aria-label="Reading git history">…</span>
+                      ) : (
+                        <span className="muted">unknown</span>
+                      )}
+                    </td>
                   )}
                   {showNote && <td className="muted">{e.note ?? ""}</td>}
                 </tr>

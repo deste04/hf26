@@ -56,8 +56,8 @@ export function accountYears(user: GhUser | null): number[] {
 
 export type ProfileActivity = {
   rows: RepoActivity[];
-  /** "last year": complete counts (GraphQL, with a token); "recent": a search sample (without one). */
-  period: "last year" | "recent";
+  /** "all years": complete counts (GraphQL, with a token); "recent": a search sample (without one). */
+  period: "all years" | "recent";
   trust: UserTrust;
   edges: TrustEdge[];
   error: string | null;
@@ -106,5 +106,5 @@ export const profileActivity = cache(async (login: string): Promise<ProfileActiv
   // Every project with a vouch list entry comes first, even with no activity; then the busiest repos.
   const total = (r: RepoActivity) => r.commits + r.prs + r.issues + r.reviews;
   const rows = [...byRepo.values()].sort((a, b) => Number(!!b.vouch) - Number(!!a.vouch) || total(b) - total(a));
-  return { rows, period: counts ? "last year" : "recent", trust, edges, error };
+  return { rows, period: counts ? "all years" : "recent", trust, edges, error };
 });

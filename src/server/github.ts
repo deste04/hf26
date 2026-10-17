@@ -93,17 +93,36 @@ export async function userCommitCounts(login: string): Promise<Record<string, nu
 export type RepoCounts = { commits: number; prs: number; issues: number; reviews: number };
 
 /**
- * Every repo the person contributed to in the last year, with complete counts per kind: the same data as the
- * GitHub profile's contribution breakdown. GraphQL only (needs a token); null without one.
+ * Every repo the person ever contributed to, with complete counts per kind: the same data as the GitHub profile's
+ * contribution breakdown, summed over every year since the account was created. GitHub serves at most one year per
+ * query, so each year is its own cached read (past years keep for days). GraphQL only (needs a token); null without one.
  */
 export async function repoActivity(login: string): Promise<Record<string, RepoCounts> | null> {
   if (!hasToken()) return null;
-  return repoActivityCached(login);
+  const user = await getUser(login);
+  if (!user) return null;
+  const thisYear = new Date().getUTCFullYear();
+  const years = Array.from({ length: thisYear - new Date(user.created_at).getUTCFullYear() + 1 }, (_, i) => thisYear - i);
+  const out: Record<string, RepoCounts> = {};
+  // A few years at a time: GraphQL has a secondary limit on concurrent requests.
+  for (let i = 0; i < years.length; i += 4) {
+    const batch = await Promise.all(years.slice(i, i + 4).map((y) => repoActivityYear(login, y, y < thisYear)));
+    for (const year of batch)
+      for (const [repo, n] of Object.entries(year ?? {})) {
+        const r = (out[repo] ??= { commits: 0, prs: 0, issues: 0, reviews: 0 });
+        r.commits += n.commits;
+        r.prs += n.prs;
+        r.issues += n.issues;
+        r.reviews += n.reviews;
+      }
+  }
+  return out;
 }
 
-async function repoActivityCached(login: string): Promise<Record<string, RepoCounts> | null> {
+async function repoActivityYear(login: string, year: number, past: boolean): Promise<Record<string, RepoCounts> | null> {
   "use cache";
-  cacheLife("hours");
+  if (past) cacheLife("days");
+  else cacheLife("hours");
   cacheTag(personTag(login));
   type ByRepo = { repository: { nameWithOwner: string }; contributions: { totalCount: number } }[];
   type Res = {
@@ -119,9 +138,9 @@ async function repoActivityCached(login: string): Promise<Record<string, RepoCou
   const res = await withRetry(
     () =>
       octokit().graphql<Res>(
-        `query($login: String!) {
+        `query($login: String!, $from: DateTime!, $to: DateTime!) {
           user(login: $login) {
-            contributionsCollection {
+            contributionsCollection(from: $from, to: $to) {
               commitContributionsByRepository(maxRepositories: 100) { repository { nameWithOwner } contributions { totalCount } }
               pullRequestContributionsByRepository(maxRepositories: 100) { repository { nameWithOwner } contributions { totalCount } }
               issueContributionsByRepository(maxRepositories: 100) { repository { nameWithOwner } contributions { totalCount } }
@@ -129,7 +148,7 @@ async function repoActivityCached(login: string): Promise<Record<string, RepoCou
             }
           }
         }`,
-        { login },
+        { login, from: `${year}-01-01T00:00:00Z`, to: past ? `${year}-12-31T23:59:59Z` : new Date().toISOString() },
       ),
     1,
   );

@@ -245,8 +245,11 @@ export type UserTrust = { status: "ok"; edges: TrustEdge[] } | { status: "needs_
 
 let warned = false;
 
-/** Every VOUCHED.td entry for the login: original lists first, then the copies. */
-export async function userEdges(login: string): Promise<UserTrust> {
+/**
+ * Every VOUCHED.td entry for the login, original lists first, then the copies, without vouchers yet. This is the
+ * quick part of a person search (file text only); attributeEdges adds the vouchers, which takes most of the time.
+ */
+export async function userListings(login: string): Promise<UserTrust> {
   if (!hasToken()) {
     // A setup problem for whoever runs the app, not something visitors can act on: log it, keep the UI quiet.
     if (!warned) console.warn("GITHUB_TOKEN is not set: person search across VOUCHED.td files is off.");
@@ -259,9 +262,9 @@ export async function userEdges(login: string): Promise<UserTrust> {
   for (const r of active.status === "fulfilled" ? active.value : []) hits.set(r.toLowerCase(), { repo: r });
   for (const h of searched.value) hits.set(h.repo.toLowerCase(), h);
 
-  // Text only first (raw.githubusercontent.com, outside the API limit): most hits mention the login in a comment.
+  // Text only (raw.githubusercontent.com, outside the API limit): most hits mention the login in a comment.
   const me = login.toLowerCase();
-  const files = await mapLimit([...hits.values()], 8, (h) => vouchFile(h.repo, h.path).catch(() => null));
+  const files = await mapLimit([...hits.values()], 16, (h) => vouchFile(h.repo, h.path).catch(() => null));
   const listings: Listing[] = [];
   [...hits.values()].forEach((h, i) => {
     const entries = files[i] ? parseVouchFile(files[i].text).filter((e) => e.platform === "github") : [];
@@ -269,22 +272,32 @@ export async function userEdges(login: string): Promise<UserTrust> {
     if (entry) listings.push({ repo: h.repo, entry, keys: new Set(entries.map((e) => e.login.toLowerCase())), copies: [] });
   });
 
-  // Originals first (the lists projects actually wrote), then every copy; each one attributed by blame.
+  // Originals first (the lists projects actually wrote), then every copy.
   const originals = groupCopies(listings).sort((a, b) => b.copies.length - a.copies.length || a.repo.localeCompare(b.repo));
   const ordered = [...originals, ...originals.flatMap((o) => listings.filter((l) => o.copies.includes(l.repo)).sort((a, b) => a.repo.localeCompare(b.repo)))];
-  const edges = await mapLimit(ordered, 6, async (l): Promise<TrustEdge> => {
-    const full = await projectEdges(l.repo).catch(() => null);
-    return (
-      full?.edges.find((e) => e.login.toLowerCase() === me) ?? {
-        project: l.repo,
-        login: l.entry.login,
-        status: l.entry.status,
-        note: l.entry.note,
-        voucher: null,
-        occurred_at: null,
-        commit_sha: null,
-      }
-    );
-  });
+  const edges = ordered.map<TrustEdge>((l) => ({
+    project: l.repo,
+    login: l.entry.login,
+    status: l.entry.status,
+    note: l.entry.note,
+    voucher: null,
+    occurred_at: null,
+    commit_sha: null,
+  }));
   return { status: "ok", edges };
+}
+
+/** The same entries with the voucher of each, from the blame of every list (one GraphQL call per list). */
+export async function attributeEdges(login: string, edges: TrustEdge[]): Promise<TrustEdge[]> {
+  const me = login.toLowerCase();
+  return mapLimit(edges, 10, async (e) => {
+    const full = await projectEdges(e.project).catch(() => null);
+    return full?.edges.find((x) => x.login.toLowerCase() === me) ?? e;
+  });
+}
+
+/** Every VOUCHED.td entry for the login with vouchers: both steps, for callers that need it all at once. */
+export async function userEdges(login: string): Promise<UserTrust> {
+  const listed = await userListings(login);
+  return listed.status === "ok" ? { status: "ok", edges: await attributeEdges(login, listed.edges) } : listed;
 }
