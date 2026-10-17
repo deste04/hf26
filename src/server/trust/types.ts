@@ -7,6 +7,4 @@ export type TrustEdge = {
   voucher: string | null; // GitHub author of the commit that added the line; null = unknown, never guessed
   occurred_at: string | null;
   commit_sha: string | null;
-  /** Person view only: other repos whose VOUCHED.td is a copy of this project's list (forks, re-uploads). */
-  copies?: string[];
 };

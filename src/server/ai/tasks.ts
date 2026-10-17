@@ -110,9 +110,12 @@ export async function runOnServer<Out>(p: Prepared<Out>, force = false, signal?:
 
 const sys = (task: string) => `${task}\n\n${RULES}\nRespond with JSON only.`;
 
+/** Up to 30 contributions for the prompt, spread across kinds so reviews and issues aren't crowded out by PRs. */
 async function safeContributions(login: string): Promise<Contribution[]> {
   try {
-    return (await userContributions(login)).slice(0, 30);
+    const all = await userContributions(login);
+    const take = (kind: Contribution["kind"], n: number) => all.filter((c) => c.kind === kind).slice(0, n);
+    return [...take("pr", 15), ...take("review", 8), ...take("issue", 7)];
   } catch {
     return [];
   }

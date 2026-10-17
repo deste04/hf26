@@ -90,6 +90,62 @@ export async function userCommitCounts(login: string): Promise<Record<string, nu
   return counts;
 }
 
+export type RepoCounts = { commits: number; prs: number; issues: number; reviews: number };
+
+/**
+ * Every repo the person contributed to in the last year, with complete counts per kind: the same data as the
+ * GitHub profile's contribution breakdown. GraphQL only (needs a token); null without one.
+ */
+export async function repoActivity(login: string): Promise<Record<string, RepoCounts> | null> {
+  if (!hasToken()) return null;
+  return repoActivityCached(login);
+}
+
+async function repoActivityCached(login: string): Promise<Record<string, RepoCounts> | null> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(personTag(login));
+  type ByRepo = { repository: { nameWithOwner: string }; contributions: { totalCount: number } }[];
+  type Res = {
+    user: {
+      contributionsCollection: {
+        commitContributionsByRepository: ByRepo;
+        pullRequestContributionsByRepository: ByRepo;
+        issueContributionsByRepository: ByRepo;
+        pullRequestReviewContributionsByRepository: ByRepo;
+      };
+    } | null;
+  };
+  const res = await withRetry(
+    () =>
+      octokit().graphql<Res>(
+        `query($login: String!) {
+          user(login: $login) {
+            contributionsCollection {
+              commitContributionsByRepository(maxRepositories: 100) { repository { nameWithOwner } contributions { totalCount } }
+              pullRequestContributionsByRepository(maxRepositories: 100) { repository { nameWithOwner } contributions { totalCount } }
+              issueContributionsByRepository(maxRepositories: 100) { repository { nameWithOwner } contributions { totalCount } }
+              pullRequestReviewContributionsByRepository(maxRepositories: 100) { repository { nameWithOwner } contributions { totalCount } }
+            }
+          }
+        }`,
+        { login },
+      ),
+    1,
+  );
+  if (!res.user) return null;
+  const c = res.user.contributionsCollection;
+  const out: Record<string, RepoCounts> = {};
+  const add = (list: ByRepo, field: keyof RepoCounts) => {
+    for (const r of list) (out[r.repository.nameWithOwner] ??= { commits: 0, prs: 0, issues: 0, reviews: 0 })[field] += r.contributions.totalCount;
+  };
+  add(c.commitContributionsByRepository, "commits");
+  add(c.pullRequestContributionsByRepository, "prs");
+  add(c.issueContributionsByRepository, "issues");
+  add(c.pullRequestReviewContributionsByRepository, "reviews");
+  return out;
+}
+
 export type CalendarDay = { date: string; count: number };
 export type Calendar = { days: CalendarDay[]; period: string; unit: { one: string; other: string } };
 

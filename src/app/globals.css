@@ -214,11 +214,6 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
 }
 .trust-search:hover { border-color: var(--border-strong); }
 .trust-table .table td { vertical-align: middle; }
-/* Copies of a list sit under the original, folded: they repeat one decision rather than add new ones. */
-.copies { margin-top: var(--space-1); font-size: var(--text-xs); color: var(--text-secondary); }
-.copies summary { cursor: pointer; width: fit-content; }
-.copies summary:hover { color: var(--foreground); }
-.copies ul { margin: var(--space-2) 0 0; padding-left: var(--space-4); display: grid; gap: 2px; max-height: 12rem; overflow: auto; }
 .trust-more { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-3); }
 
 /* Trust graph */

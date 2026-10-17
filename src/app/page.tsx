@@ -53,12 +53,11 @@ async function Results({ searchParams }: { searchParams: Search }) {
   const q = cleanQuery((await searchParams).q ?? "");
   if (!q) return <ExploreEmpty scene="search" title="Search a person or a project" line="Try @handle or owner/repo." />;
   const result = await exploreSearch(q);
-  if (result.edges.length === 0) return <NoResult result={result} />;
+  if (result.edges.length === 0 && result.activity.length === 0) return <NoResult result={result} />;
 
   const title = result.kind === "user" ? `@${result.q}` : result.q;
   const vouched = result.edges.filter((e) => e.status === "vouched").length;
   const denounced = result.edges.length - vouched;
-  const copies = result.edges.reduce((n, e) => n + (e.copies?.length ?? 0), 0);
   return (
     <>
       <div className="card">
@@ -71,10 +70,9 @@ async function Results({ searchParams }: { searchParams: Search }) {
               {result.kind === "user"
                 ? `Listed in ${plural(result.edges.length, "project", "projects")}`
                 : plural(result.edges.length, "listed user", "listed users")}
-              {" · "}
-              <span className="tone-success">{fmt(vouched)} vouched</span>
+              {vouched > 0 && <> · <span className="tone-success">{fmt(vouched)} vouched</span></>}
               {denounced > 0 && <> · <span className="tone-danger">{fmt(denounced)} denounced</span></>}
-              {copies > 0 && <> · {plural(copies, "copied list", "copied lists")} not counted</>}
+              {result.activity.length > 0 && <> · {plural(result.activity.length, "other repo", "other repos")} with activity</>}
             </span>
           </div>
           {result.kind === "user" ? (
@@ -83,9 +81,9 @@ async function Results({ searchParams }: { searchParams: Search }) {
             <LinkButton href={`https://github.com/${result.q}`} external icon={<GithubMark />}>View on GitHub</LinkButton>
           )}
         </div>
-        <TrustGraph center={{ kind: result.kind, id: result.q }} edges={result.edges} />
+        <TrustGraph center={{ kind: result.kind, id: result.q }} edges={result.edges} activity={result.activity} />
       </div>
-      <TrustTable kind={result.kind} edges={result.edges} />
+      {result.edges.length > 0 && <TrustTable kind={result.kind} edges={result.edges} />}
     </>
   );
 }

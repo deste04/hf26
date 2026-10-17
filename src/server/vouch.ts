@@ -1,7 +1,7 @@
 // Trust data read live from GitHub, cached with Next's "use cache" instead of a local index.
 //   projectEdges("owner/repo") → the repo's VOUCHED.td, each line attributed to the commit that added it
-//   userEdges("login")         → every VOUCHED.td that lists the login, with copies of the same list grouped under
-//                                the original (code search needs a token; recent activity fills in what it misses)
+//   userEdges("login")         → every VOUCHED.td that lists the login (code search needs a token; recent activity
+//                                fills in what it misses)
 import { cacheLife, cacheTag } from "next/cache";
 import { personTag } from "./github";
 import { hasToken, octokit, split, withRetry } from "./githubCore";
@@ -10,14 +10,12 @@ import { entryKeys, parseVouchFile, type VouchEntry } from "./vouchParser";
 
 /** Vouch reads only these two locations; other hits are templates or vendored copies of another project's list. */
 const PATHS = ["VOUCHED.td", ".github/VOUCHED.td"];
-/** Commits of history read per file. Lines older than this window keep an unknown voucher. */
+/** Without a token: commits of history read per file. Lines older than this window keep an unknown voucher. */
 const MAX_COMMITS = 30;
 /** Repos taken from a person's recent activity, and from their own most recently pushed repos. */
 const MAX_ACTIVE = 12;
 /** Code search pages of 100 read per person (GitHub allows 10 code searches a minute). */
 const SEARCH_PAGES = 2;
-/** Original lists per person whose git history is read for the voucher's name; the rest show "unknown". */
-const MAX_ATTRIBUTED = 10;
 /** A list counts as a copy of a larger one when this share of its entries is in it… */
 const COPY_OVERLAP = 0.9;
 /** …and it is at least this long, so two short lists never merge by coincidence. */
@@ -34,17 +32,64 @@ async function raw(fullName: string, ref: string, path: string): Promise<string 
 type Attribution = { voucher: string | null; date: string; sha: string };
 
 /**
- * Who set each entry to its current status: walk the file's commits oldest first and remember the commit that last
- * added or flipped each line. With history cut at MAX_COMMITS, lines already in the oldest commit stay unknown.
+ * Who vouched, from the commit that wrote the line. Vouch's bot commits on a maintainer's behalf and names them in
+ * its message ("Triggered by … from @jcollie."), so a bot author is replaced by that maintainer. A bot commit that
+ * names nobody stays unknown: never guessed.
  */
-async function attribute(fullName: string, path: string): Promise<Map<string, Attribution>> {
+function voucherOf(author: string | null, message: string): string | null {
+  if (author && !author.endsWith("[bot]")) return author;
+  return message.match(/\bfrom @([A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)/)?.[1] ?? null;
+}
+
+/** Git blame of the file at HEAD through GraphQL (needs a token): one call, the whole history, line by line. */
+async function blame(fullName: string, path: string): Promise<Map<number, Attribution> | null> {
+  type Range = { startingLine: number; endingLine: number; commit: { oid: string; committedDate: string; message: string; author: { user: { login: string } | null } | null } };
+  type Res = { repository: { object: { blame: { ranges: Range[] } } | null } | null };
+  const { owner, repo } = split(fullName);
+  try {
+    const res = await withRetry(
+      () =>
+        octokit().graphql<Res>(
+          `query($owner: String!, $name: String!, $path: String!) {
+            repository(owner: $owner, name: $name) {
+              object(expression: "HEAD") {
+                ... on Commit { blame(path: $path) { ranges { startingLine endingLine commit { oid committedDate message author { user { login } } } } } }
+              }
+            }
+          }`,
+          { owner, name: repo, path },
+        ),
+      1,
+    );
+    const ranges = res.repository?.object?.blame.ranges;
+    if (!ranges) return null;
+    const out = new Map<number, Attribution>();
+    for (const r of ranges) {
+      const a = { voucher: voucherOf(r.commit.author?.user?.login ?? null, r.commit.message), date: r.commit.committedDate, sha: r.commit.oid };
+      for (let line = r.startingLine; line <= r.endingLine; line++) out.set(line, a);
+    }
+    return out;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Without a token: walk the file's last MAX_COMMITS commits oldest first and remember the commit that last added or
+ * flipped each line. Lines already in the oldest commit stay unknown.
+ */
+async function walkHistory(fullName: string, path: string): Promise<Map<string, Attribution>> {
   const out = new Map<string, Attribution>();
-  let commits: { sha: string; author: string | null; date: string }[];
+  let commits: { sha: string; voucher: string | null; date: string }[];
   try {
     // One try: a rate-limited history only costs the voucher names, not the page.
     const { data } = await withRetry(() => octokit().repos.listCommits({ ...split(fullName), path, per_page: MAX_COMMITS }), 1);
     commits = data
-      .map((c) => ({ sha: c.sha, author: c.author?.login ?? null, date: c.commit.committer?.date ?? c.commit.author?.date ?? "" }))
+      .map((c) => ({
+        sha: c.sha,
+        voucher: voucherOf(c.author?.login ?? null, c.commit.message),
+        date: c.commit.committer?.date ?? c.commit.author?.date ?? "",
+      }))
       .reverse();
   } catch {
     return out;
@@ -60,9 +105,21 @@ async function attribute(fullName: string, path: string): Promise<Map<string, At
     const cur = entryKeys(texts[i] ?? "");
     for (const [key, e] of cur) {
       const before = prev.get(key);
-      if (!before || before.status !== e.status) out.set(key, { voucher: commits[i].author, date: commits[i].date, sha: commits[i].sha });
+      if (!before || before.status !== e.status) out.set(key, { voucher: commits[i].voucher, date: commits[i].date, sha: commits[i].sha });
     }
     prev = cur;
+  }
+  return out;
+}
+
+/** Attribution per entry key: blame when a token is set, else the recent-history walk. */
+async function attribute(fullName: string, path: string, entries: VouchEntry[]): Promise<Map<string, Attribution>> {
+  const lines = hasToken() ? await blame(fullName, path) : null;
+  if (!lines) return walkHistory(fullName, path);
+  const out = new Map<string, Attribution>();
+  for (const e of entries) {
+    const a = lines.get(e.line);
+    if (a) out.set(`${e.platform}:${e.login.toLowerCase()}`, a);
   }
   return out;
 }
@@ -88,21 +145,20 @@ export async function projectEdges(fullName: string): Promise<ProjectTrust | nul
   cacheLife("hours");
   const file = await vouchFile(fullName);
   if (!file) return null;
-  const who = await attribute(fullName, file.path);
-  const edges = parseVouchFile(file.text)
-    .filter((e) => e.platform === "github")
-    .map<TrustEdge>((e) => {
-      const a = who.get(`${e.platform}:${e.login.toLowerCase()}`);
-      return {
-        project: fullName,
-        login: e.login,
-        status: e.status,
-        note: e.note,
-        voucher: a?.voucher ?? null,
-        occurred_at: a?.date ?? null,
-        commit_sha: a?.sha ?? null,
-      };
-    });
+  const entries = parseVouchFile(file.text).filter((e) => e.platform === "github");
+  const who = await attribute(fullName, file.path, entries);
+  const edges = entries.map<TrustEdge>((e) => {
+    const a = who.get(`${e.platform}:${e.login.toLowerCase()}`);
+    return {
+      project: fullName,
+      login: e.login,
+      status: e.status,
+      note: e.note,
+      voucher: a?.voucher ?? null,
+      occurred_at: a?.date ?? null,
+      commit_sha: a?.sha ?? null,
+    };
+  });
   return { project: fullName, path: file.path, edges };
 }
 
@@ -164,9 +220,10 @@ async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promis
 type Listing = { repo: string; entry: VouchEntry; keys: Set<string>; copies: string[] };
 
 /**
- * Groups copied lists under the list they were copied from. Forks and re-uploads of a project (dozens of ghostty
- * clones, say) carry its VOUCHED.td along, often an older snapshot of it: counting each one would credit the same
- * decision many times. Largest list first, so a copy always meets its original before itself.
+ * Finds which lists were copied from another one. Forks and re-uploads of a project (dozens of ghostty clones, say)
+ * carry its VOUCHED.td along, often an older snapshot. Every list is still shown; this only orders them, originals
+ * first.
+ * Largest list first, so a copy always meets its original before itself.
  */
 function groupCopies(listings: Listing[]): Listing[] {
   const originals: Listing[] = [];
@@ -188,7 +245,7 @@ export type UserTrust = { status: "ok"; edges: TrustEdge[] } | { status: "needs_
 
 let warned = false;
 
-/** Every VOUCHED.td entry for the login, one per original list, with the repos that copied that list. */
+/** Every VOUCHED.td entry for the login: original lists first, then the copies. */
 export async function userEdges(login: string): Promise<UserTrust> {
   if (!hasToken()) {
     // A setup problem for whoever runs the app, not something visitors can act on: log it, keep the UI quiet.
@@ -212,23 +269,22 @@ export async function userEdges(login: string): Promise<UserTrust> {
     if (entry) listings.push({ repo: h.repo, entry, keys: new Set(entries.map((e) => e.login.toLowerCase())), copies: [] });
   });
 
-  // Git history (an API call plus up to 30 file versions) only for the originals that are shown first.
+  // Originals first (the lists projects actually wrote), then every copy; each one attributed by blame.
   const originals = groupCopies(listings).sort((a, b) => b.copies.length - a.copies.length || a.repo.localeCompare(b.repo));
-  const edges = await Promise.all(
-    originals.map(async (o, i): Promise<TrustEdge> => {
-      const full = i < MAX_ATTRIBUTED ? await projectEdges(o.repo).catch(() => null) : null;
-      const attributed = full?.edges.find((e) => e.login.toLowerCase() === me);
-      const base: TrustEdge = attributed ?? {
-        project: o.repo,
-        login: o.entry.login,
-        status: o.entry.status,
-        note: o.entry.note,
+  const ordered = [...originals, ...originals.flatMap((o) => listings.filter((l) => o.copies.includes(l.repo)).sort((a, b) => a.repo.localeCompare(b.repo)))];
+  const edges = await mapLimit(ordered, 6, async (l): Promise<TrustEdge> => {
+    const full = await projectEdges(l.repo).catch(() => null);
+    return (
+      full?.edges.find((e) => e.login.toLowerCase() === me) ?? {
+        project: l.repo,
+        login: l.entry.login,
+        status: l.entry.status,
+        note: l.entry.note,
         voucher: null,
         occurred_at: null,
         commit_sha: null,
-      };
-      return o.copies.length ? { ...base, copies: o.copies.sort() } : base;
-    }),
-  );
+      }
+    );
+  });
   return { status: "ok", edges };
 }

@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/arc/button/button";
 import type { TrustEdge } from "@/server/trust/types";
 
-type Props = { center: { kind: "user" | "project"; id: string }; edges: TrustEdge[] };
+/** `activity`: person view only, repos the person contributed to without being in their VOUCHED.td. */
+type Props = { center: { kind: "user" | "project"; id: string }; edges: TrustEdge[]; activity?: string[] };
 
 // Cytoscape draws on canvas and cannot read CSS variables (or oklch), so Arc tokens are resolved to rgb.
 const TOKENS = {
@@ -33,27 +34,34 @@ function readPalette(): Palette {
   return Object.fromEntries(Object.entries(TOKENS).map(([k, v]) => [k, toRgb(css.getPropertyValue(v).trim())])) as Palette;
 }
 
-const FONT_MONO = "Geist Mono, ui-monospace, monospace";
-const FONT_BODY = "Inter, system-ui, sans-serif";
+/** The canvas can't use CSS variables, so read the page's resolved font stacks (Outfit, Geist Mono) once drawn. */
+const fonts = () => {
+  const css = getComputedStyle(document.documentElement);
+  return {
+    mono: css.getPropertyValue("--font-mono").trim() || "ui-monospace, monospace",
+    body: css.getPropertyValue("--font-body").trim() || "system-ui, sans-serif",
+  };
+};
 
 /** Size tier from node count: small graphs stay compact, big ones get rings and more room. */
 function tier(n: number) {
   if (n <= 8) return { height: 340, maxZoom: 1.3, font: 12, pad: 8, ring: Infinity, spacing: 60, edge: 2 };
-  if (n <= 40) return { height: 460, maxZoom: 1.2, font: 11, pad: 6, ring: Infinity, spacing: 24, edge: 1.5 };
+  // Mid-size graphs use rings of ~14 too: one big circle of 30+ nodes makes "fit" zoom out until labels are unreadable.
+  if (n <= 40) return { height: 520, maxZoom: 1.2, font: 11, pad: 6, ring: 14, spacing: 40, edge: 1.5 };
   return { height: 640, maxZoom: 1.1, font: 10, pad: 4, ring: 48, spacing: 8, edge: 1 };
 }
 
-export default function TrustGraph({ center, edges }: Props) {
+export default function TrustGraph({ center, edges, activity = [] }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<import("cytoscape").Core | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const router = useRouter();
-  const nodeCount = 1 + new Set(edges.map((e) => (center.kind === "user" ? e.project : e.login))).size;
+  const nodeCount = 1 + new Set(edges.map((e) => (center.kind === "user" ? e.project : e.login))).size + activity.length;
   const t = tier(nodeCount);
   const denouncedCount = edges.filter((e) => e.status === "denounced").length;
 
-  const styleFor = (c: Palette): import("cytoscape").StylesheetJson => [
+  const styleFor = (c: Palette, f = fonts()): import("cytoscape").StylesheetJson => [
     {
       selector: "node",
       style: {
@@ -62,7 +70,7 @@ export default function TrustGraph({ center, edges }: Props) {
         width: "label" as never,
         height: "label" as never,
         padding: `${t.pad}px` as never,
-        "font-family": FONT_MONO,
+        "font-family": f.mono,
         "font-size": t.font,
         color: c.fg,
         "text-valign": "center",
@@ -77,6 +85,29 @@ export default function TrustGraph({ center, edges }: Props) {
       selector: 'node[status = "denounced"]',
       style: { "background-color": c.surface, color: c.bad, "border-color": c.bad, "border-width": 2, "font-weight": 600, "z-index": 10 },
     },
+    // More than a handful of nodes: dots with the name underneath. Label-sized boxes widen every ring until "fit"
+    // shrinks the text out of reach; dots keep the rings tight, so every node stays on screen and readable.
+    ...(nodeCount > 8
+      ? ([
+          {
+            selector: "node[isCenter = 0]",
+            style: {
+              shape: "ellipse",
+              width: 12,
+              height: 12,
+              padding: "0px" as never,
+              "background-color": c.ok,
+              "border-width": 0,
+              "text-valign": "bottom",
+              "text-margin-y": 4,
+              "font-size": t.font + 1,
+              color: c.secondary,
+            },
+          },
+          { selector: 'node[isCenter = 0][status = "denounced"]', style: { "background-color": c.bad, color: c.bad } },
+          { selector: 'node[isCenter = 0][status = "activity"]', style: { "background-color": c.unknown } },
+        ] as import("cytoscape").StylesheetJson)
+      : []),
     {
       selector: "node[isCenter = 1]",
       style: {
@@ -86,7 +117,7 @@ export default function TrustGraph({ center, edges }: Props) {
         "background-color": c.fg,
         "border-width": 0,
         color: c.bg,
-        "font-family": FONT_BODY,
+        "font-family": f.body,
         "font-weight": 600,
         "font-size": 14,
       },
@@ -102,7 +133,7 @@ export default function TrustGraph({ center, edges }: Props) {
         "curve-style": "straight",
         label: "data(label)",
         "font-size": 11,
-        "font-family": FONT_BODY,
+        "font-family": f.body,
         color: c.secondary,
         "text-background-color": c.surface,
         "text-background-opacity": 1,
@@ -110,6 +141,9 @@ export default function TrustGraph({ center, edges }: Props) {
       },
     },
     { selector: 'edge[status = "denounced"]', style: { opacity: 1, width: Math.max(2, t.edge), "z-index": 10 } },
+    // Contribution without a vouch list entry: present, but quieter than any trust edge.
+    { selector: 'edge[status = "activity"]', style: { width: 1, opacity: 0.45, "line-color": c.unknown, "line-style": "dotted" as never } },
+    { selector: 'node[status = "activity"]', style: { "border-color": c.border, "border-style": "dotted" as never } },
   ];
 
   const fit = () => {
@@ -166,11 +200,17 @@ export default function TrustGraph({ center, edges }: Props) {
           },
         });
       });
+      for (const repo of activity) {
+        const id = `project:${repo}`;
+        if (nodes.has(id)) continue;
+        nodes.set(id, { id, label: repo, kind: "project", status: "activity" });
+        els.push({ data: { id: `a:${repo}`, source: id, target: centerId, label: "", hasVoucher: 0, style: "dotted", status: "activity" } });
+      }
       // Large graphs: spread leaves over several concentric rings instead of one giant circle.
       // Denounced nodes go on their own inner ring so they are never lost in a big graph.
       let leaf = 0;
-      const vouchedCount = [...nodes.values()].filter((n) => n.status === "vouched").length;
-      const rings = Math.max(1, Math.ceil(vouchedCount / t.ring));
+      const leafCount = [...nodes.values()].filter((n) => n.status === "vouched" || n.status === "activity").length;
+      const rings = Math.max(1, Math.ceil(leafCount / t.ring));
       const hasDenounced = [...nodes.values()].some((n) => n.status === "denounced");
       for (const n of nodes.values()) {
         const isCenter = n.id === centerId;
@@ -229,12 +269,13 @@ export default function TrustGraph({ center, edges }: Props) {
         className="graph"
         style={{ height: fullscreen ? undefined : t.height }}
         role="img"
-        aria-label={`Trust graph for ${center.id}: ${edges.length} vouch list entries. The table below lists the same data.`}
+        aria-label={`Trust graph for ${center.id}: ${edges.length} vouch list entries${activity.length ? ` and ${activity.length} repos with activity only` : ""}. The table below lists the vouch entries.`}
       />
       <div className="legend" aria-hidden="true">
         <span><i style={{ borderColor: "var(--success)" }} />Vouched</span>
         <span><i style={{ borderColor: "var(--text-muted)", borderTopStyle: "dashed" }} />Unknown voucher</span>
         <span><i style={{ borderColor: "var(--danger)" }} />Denounced{denouncedCount ? ` (${denouncedCount}, inner ring)` : ""}</span>
+        {activity.length > 0 && <span><i style={{ borderColor: "var(--text-muted)", borderTopStyle: "dotted", opacity: 0.7 }} />Activity only</span>}
         <span>Click a node to explore it</span>
       </div>
     </div>

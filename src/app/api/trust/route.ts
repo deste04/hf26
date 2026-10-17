@@ -15,6 +15,6 @@ export async function GET(request: Request) {
       { status: 400 },
     );
   }
-  const { kind, q, edges, issue } = await exploreSearch(raw);
-  return Response.json({ kind, q, count: edges.length, issue, edges });
+  const { kind, q, edges, activity, issue } = await exploreSearch(raw);
+  return Response.json({ kind, q, count: edges.length, issue, edges, activity });
 }

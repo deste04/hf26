@@ -37,10 +37,9 @@ async function Profile({ params }: { params: Params }) {
   const data = await getProfileData(login);
   const vouched = data.edges.filter((e) => e.status === "vouched");
   const denounced = data.edges.filter((e) => e.status === "denounced");
-  const unknownVoucher = vouched.filter((e) => !e.voucher);
+  // Repos with activity but no entry in their VOUCHED.td.
+  const notVouched = data.activity.filter((r) => !r.vouch).length;
   const plural = (n: number) => (n === 1 ? "" : "s");
-  const copiesTip = (n: number) =>
-    `${n} other repo${n === 1 ? "" : "s"} (forks and clones of this project) carry a copy of its VOUCHED.td. They repeat the decision of this project, so they are not counted as separate vouches.`;
 
   return (
     <main className="container profile-page">
@@ -56,51 +55,26 @@ async function Profile({ params }: { params: Params }) {
           <Badge tone="success">
             Vouched in {vouched.length} project{plural(vouched.length)}
           </Badge>
-          {unknownVoucher.length > 0 && <Badge tone="neutral">Unknown voucher in {unknownVoucher.length}</Badge>}
+          {notVouched > 0 && <Badge tone="neutral">Not vouched in {notVouched} repo{plural(notVouched)}</Badge>}
           {denounced.length > 0 && <Badge tone="danger">Denounced in {denounced.length}</Badge>}
         </div>}
 
-        {/* Shown only when the vouch lists could actually be searched: an unknown is never presented as "not vouched". */}
-        {data.trustStatus === "ok" && <div className="profile-vouchers">
-          <span className="profile-label">Vouched by</span>
-          {vouched.length === 0 ? (
-            <span className="muted small">Not vouched in any VOUCHED.td found on GitHub.</span>
-          ) : (
+        {/* Which projects vouch is in the activity table; only denouncements, with the maintainers' notes, are listed here. */}
+        {data.trustStatus === "ok" && denounced.length > 0 && (
+          <div className="profile-vouchers">
+            <span className="profile-label">Denounced in</span>
             <ul>
-              {vouched.map((e) => (
+              {denounced.map((e) => (
                 <li key={e.project}>
-                  {e.voucher ? (
-                    <Link href={`/u/${e.voucher}`}>@{e.voucher}</Link>
-                  ) : (
-                    <span className="muted">unknown</span>
-                  )}{" "}
-                  ·{" "}
                   <Link href={`/?q=${encodeURIComponent(e.project)}`} className="mono">
                     {e.project}
                   </Link>
-                  {e.copies?.length ? (
-                    <span className="muted small copies-note" title={copiesTip(e.copies.length)}> +{e.copies.length} copied list{plural(e.copies.length)}</span>
-                  ) : null}
+                  {e.note && <span className="muted small"> — “{e.note}”</span>}
                 </li>
               ))}
             </ul>
-          )}
-          {denounced.length > 0 && (
-            <>
-              <span className="profile-label">Denounced in</span>
-              <ul>
-                {denounced.map((e) => (
-                  <li key={e.project}>
-                    <Link href={`/?q=${encodeURIComponent(e.project)}`} className="mono">
-                      {e.project}
-                    </Link>
-                    {e.note && <span className="muted small"> — “{e.note}”</span>}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>}
+          </div>
+        )}
 
         <LinkButton href={`https://github.com/${data.login}`} external icon={<GithubMark />}>
           View on GitHub
@@ -119,7 +93,10 @@ async function Profile({ params }: { params: Params }) {
         )}
 
         <section className="card profile-section" aria-labelledby="activity-title">
-          <h2 id="activity-title">Activity by project</h2>
+          <div className="activity-head">
+            <h2 id="activity-title">Activity by project</h2>
+            <span className="muted small">{data.activityPeriod === "last year" ? "Last year, every repo" : "Recent activity"}</span>
+          </div>
           {data.activity.length === 0 ? (
             <p className="muted">No public activity found.</p>
           ) : (
@@ -129,8 +106,7 @@ async function Profile({ params }: { params: Params }) {
                   <tr>
                     <th scope="col">Project</th>
                     <th scope="col">Commits</th>
-                    <th scope="col">PRs merged</th>
-                    <th scope="col">PRs open</th>
+                    <th scope="col">PRs</th>
                     <th scope="col">Issues</th>
                     <th scope="col">Reviews</th>
                     {data.trustStatus === "ok" && <th scope="col">Vouch</th>}
@@ -145,8 +121,7 @@ async function Profile({ params }: { params: Params }) {
                         </a>
                       </td>
                       <td>{r.commits}</td>
-                      <td>{r.merged}</td>
-                      <td>{r.open}</td>
+                      <td>{r.prs}</td>
                       <td>{r.issues}</td>
                       <td>{r.reviews}</td>
                       {data.trustStatus === "ok" && (
@@ -157,9 +132,6 @@ async function Profile({ params }: { params: Params }) {
                             <Badge tone="danger" size="sm">Denounced</Badge>
                           ) : (
                             <span className="muted">Not listed</span>
-                          )}
-                          {r.copies > 0 && (
-                            <span className="muted small copies-note" title={copiesTip(r.copies)}> +{r.copies} copied list{plural(r.copies)}</span>
                           )}
                         </td>
                       )}
