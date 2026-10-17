@@ -31,6 +31,8 @@ export type Prepared<Out> = {
   system: string; // includes RULES
   prompt: string;
   postprocess: (raw: never) => Out;
+  /** Re-derives the parts of a stored result that come from data rather than the model, so a cache hit stays current. */
+  refresh?: (stored: never) => Out;
 };
 
 /** What the browser needs to run the model itself. */
@@ -52,7 +54,8 @@ const keyOf = (p: Prepared<unknown>, model: string) => ({
 export function cachedResult<Out>(p: Prepared<Out>, model: string): AiResult<Out> | undefined {
   const hit = briefStore.get(keyOf(p, model));
   if (!hit) return undefined;
-  return { ok: true, data: JSON.parse(hit.output_json) as Out, cached: true, created_at: hit.created_at, model };
+  const stored = JSON.parse(hit.output_json) as Out;
+  return { ok: true, data: p.refresh ? p.refresh(stored as never) : stored, cached: true, created_at: hit.created_at, model };
 }
 
 /** Validate raw model text, keep only grounded URLs, store. */
@@ -137,7 +140,7 @@ export type Brief = {
 function describeVouchLists(s: { vouched_in: number; denounced_in: number; denounce_notes: (string | null)[] } | null) {
   if (!s) return ""; // unknown (no token or search failed): the card hides the box rather than guess
   const projects = (n: number) => `${n} project${n === 1 ? "" : "s"}`;
-  if (s.vouched_in === 0 && s.denounced_in === 0) return "Not listed in any VOUCHED.td GitHub search found.";
+  if (s.vouched_in === 0 && s.denounced_in === 0) return "Not listed in any VOUCHED.td found on GitHub.";
   const parts: string[] = [];
   if (s.denounced_in > 0) {
     const notes = s.denounce_notes.length ? ` with the note${s.denounce_notes.length > 1 ? "s" : ""} ${s.denounce_notes.map((n) => `“${n}”`).join(", ")}` : "";
@@ -195,6 +198,8 @@ export async function prepareBrief(login: string): Promise<Prepared<Brief>> {
       }),
       areas: [...new Set(b.areas.map((a) => a.toLowerCase()))],
     }),
+    // Vouch lists change independently of the model's text: always state the current ones.
+    refresh: (b: Brief): Brief => ({ ...b, vouch_lists: describeVouchLists(vouch_summary) }),
   };
 }
 

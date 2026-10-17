@@ -2,8 +2,11 @@
 // Auth, retry and the uncached helpers live in ./githubCore.ts.
 // Every call here runs while a page waits, so none of them retries on rate limits: a stale cached value is
 // served while it revalidates, and a page without one shows that GitHub is unavailable.
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { hasToken, octokit, withRetry } from "./githubCore";
+
+/** Tag on everything a profile's activity is built from, so Regenerate can re-read it from GitHub. */
+export const personTag = (login: string) => `person:${login.toLowerCase()}`;
 
 export type GhUser = {
   login: string;
@@ -46,6 +49,7 @@ export type Contribution = {
 export async function userContributions(login: string): Promise<Contribution[]> {
   "use cache";
   cacheLife("hours");
+  cacheTag(personTag(login));
   const search = async (q: string, kind: Contribution["kind"], n: number) => {
     // Search allows 10 requests a minute without a token.
     const { data } = await withRetry(

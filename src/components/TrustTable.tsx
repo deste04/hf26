@@ -77,7 +77,19 @@ export function TrustTable({ kind, edges }: { kind: "user" | "project"; edges: T
                 <tr key={`${e.project}:${e.login}`}>
                   <td>
                     {kind === "user" ? (
-                      <Link className="mono" href={`/?q=${encodeURIComponent(e.project)}`}>{e.project}</Link>
+                      <>
+                        <Link className="mono" href={`/?q=${encodeURIComponent(e.project)}`}>{e.project}</Link>
+                        {e.copies?.length ? (
+                          <details className="copies">
+                            <summary>+{e.copies.length} {e.copies.length === 1 ? "copy" : "copies"} of this list</summary>
+                            <ul>
+                              {e.copies.map((c) => (
+                                <li key={c}><a className="mono" href={`https://github.com/${c}`} target="_blank" rel="noreferrer">{c}</a></li>
+                              ))}
+                            </ul>
+                          </details>
+                        ) : null}
+                      </>
                     ) : (
                       <Link className="mono" href={`/u/${encodeURIComponent(e.login)}`}>@{e.login}</Link>
                     )}

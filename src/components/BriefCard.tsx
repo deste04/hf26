@@ -1,5 +1,7 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { RotateCw } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { Alert } from "@/components/arc/alert/alert";
 import { Badge } from "@/components/arc/badge/badge";
@@ -16,6 +18,7 @@ async function fetchBrief(login: string, force: boolean, signal?: AbortSignal): 
 
 export function BriefCard({ login }: { login: string }) {
   const qc = useQueryClient();
+  const router = useRouter();
   const key = ["brief", login.toLowerCase()];
   // TanStack Query aborts `signal` when the last observer unmounts, i.e. when the profile closes.
   const q = useQuery({ queryKey: key, queryFn: ({ signal }) => fetchBrief(login, false, signal), staleTime: Infinity });
@@ -27,7 +30,11 @@ export function BriefCard({ login }: { login: string }) {
       regenAbort.current = new AbortController();
       return fetchBrief(login, true, regenAbort.current.signal);
     },
-    onSuccess: (res) => qc.setQueryData(key, res),
+    onSuccess: (res) => {
+      qc.setQueryData(key, res);
+      // The server re-read this person's activity for the new brief; redraw the page's tables from it.
+      router.refresh();
+    },
   });
   const res = regen.isPending ? undefined : q.data;
   const loading = q.isLoading || regen.isPending;
@@ -37,8 +44,18 @@ export function BriefCard({ login }: { login: string }) {
       <div className="brief-head">
         <h2 id="brief-title">Contribution brief</h2>
         <div className="brief-actions">
-          <Button variant="ghost" size="sm" onClick={() => regen.mutate()} disabled={loading} loading={regen.isPending}>
-            Regenerate
+          {/* While a new brief is being written the same button cancels it, through the abort controller above. */}
+          <Button
+            variant="secondary"
+            size="sm"
+            className="regen-btn"
+            data-busy={regen.isPending || undefined}
+            onClick={() => (regen.isPending ? regenAbort.current?.abort() : regen.mutate())}
+            disabled={q.isLoading}
+            title={regen.isPending ? "Stop" : "Re-read public activity from GitHub and write a new brief"}
+          >
+            <RotateCw className="regen-icon" size={15} aria-hidden="true" />
+            <span>{regen.isPending ? "Cancel" : "Regenerate"}</span>
           </Button>
         </div>
       </div>

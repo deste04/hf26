@@ -19,6 +19,12 @@
 /* Contribution brief */
 .brief-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
 .brief-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+/* Regenerate: the arrow turns half a lap on hover and keeps turning while a new brief is written. */
+.regen-btn .regen-icon { flex: none; transition: transform 420ms var(--ease-standard); }
+@media (hover: hover) and (pointer: fine) { .regen-btn:hover:not([data-busy]) .regen-icon { transform: rotate(180deg); } }
+.regen-btn[data-busy] .regen-icon { animation: regen-spin 900ms linear infinite; }
+@keyframes regen-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .regen-btn .regen-icon { transition: none; animation: none !important; } }
 .brief-summary { margin: 0; font-size: var(--text-base); line-height: 1.55; }
 .brief-block { display: flex; flex-direction: column; gap: var(--space-2); }
 .brief-block h3 { margin: 0; font-size: var(--text-xs); font-weight: 500; color: var(--text-secondary); }

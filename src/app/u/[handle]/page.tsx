@@ -62,7 +62,7 @@ async function Profile({ params }: { params: Params }) {
         {data.trustStatus === "ok" && <div className="profile-vouchers">
           <span className="profile-label">Vouched by</span>
           {vouched.length === 0 ? (
-            <span className="muted small">Not vouched in any VOUCHED.td GitHub found.</span>
+            <span className="muted small">Not vouched in any VOUCHED.td found on GitHub.</span>
           ) : (
             <ul>
               {vouched.map((e) => (
@@ -76,6 +76,7 @@ async function Profile({ params }: { params: Params }) {
                   <Link href={`/?q=${encodeURIComponent(e.project)}`} className="mono">
                     {e.project}
                   </Link>
+                  {e.copies?.length ? <span className="muted small"> +{e.copies.length} {e.copies.length === 1 ? "copy" : "copies"}</span> : null}
                 </li>
               ))}
             </ul>

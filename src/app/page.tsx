@@ -58,6 +58,7 @@ async function Results({ searchParams }: { searchParams: Search }) {
   const title = result.kind === "user" ? `@${result.q}` : result.q;
   const vouched = result.edges.filter((e) => e.status === "vouched").length;
   const denounced = result.edges.length - vouched;
+  const copies = result.edges.reduce((n, e) => n + (e.copies?.length ?? 0), 0);
   return (
     <>
       <div className="card">
@@ -73,6 +74,7 @@ async function Results({ searchParams }: { searchParams: Search }) {
               {" · "}
               <span className="tone-success">{fmt(vouched)} vouched</span>
               {denounced > 0 && <> · <span className="tone-danger">{fmt(denounced)} denounced</span></>}
+              {copies > 0 && <> · {plural(copies, "copied list", "copied lists")} not counted</>}
             </span>
           </div>
           {result.kind === "user" ? (
