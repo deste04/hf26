@@ -3,10 +3,10 @@ import { Skeleton } from "@/components/arc/skeleton/skeleton";
 import { ExploreEmpty } from "@/components/ExploreEmpty";
 import { GithubMark, LinkButton } from "@/components/LinkButton";
 import { SearchBar } from "@/components/SearchBar";
-import TrustGraph from "@/components/TrustGraph";
+import { ActivityCount, ResultGraph } from "@/components/ResultGraph";
 import { TrustTable } from "@/components/TrustTable";
 import { cleanQuery } from "@/lib/query";
-import { exploreSearch, type ExploreResult } from "@/server/actions/explore";
+import { activityOnly, exploreSearch, type ExploreResult } from "@/server/actions/explore";
 
 const fmt = (n: number) => n.toLocaleString("en-US");
 const plural = (n: number, one: string, other: string) => `${fmt(n)} ${n === 1 ? one : other}`;
@@ -53,7 +53,10 @@ async function Results({ searchParams }: { searchParams: Search }) {
   const q = cleanQuery((await searchParams).q ?? "");
   if (!q) return <ExploreEmpty scene="search" title="Search a person or a project" line="Try @handle or owner/repo." />;
   const result = await exploreSearch(q);
-  if (result.edges.length === 0 && result.activity.length === 0) return <NoResult result={result} />;
+  // Started now, awaited by the graph and the header count as it streams: the trust graph does not wait for it.
+  const activity = result.kind === "user" && !result.issue ? activityOnly(result.q, result.edges) : Promise.resolve([]);
+  // No vouch entries: the graph has only activity to show, so this one case waits for it.
+  if (result.edges.length === 0 && (await activity).length === 0) return <NoResult result={result} />;
 
   const title = result.kind === "user" ? `@${result.q}` : result.q;
   const vouched = result.edges.filter((e) => e.status === "vouched").length;
@@ -72,7 +75,9 @@ async function Results({ searchParams }: { searchParams: Search }) {
                 : plural(result.edges.length, "listed user", "listed users")}
               {vouched > 0 && <> · <span className="tone-success">{fmt(vouched)} vouched</span></>}
               {denounced > 0 && <> · <span className="tone-danger">{fmt(denounced)} denounced</span></>}
-              {result.activity.length > 0 && <> · {plural(result.activity.length, "other repo", "other repos")} with activity</>}
+              <Suspense fallback={null}>
+                <ActivityCount activity={activity} />
+              </Suspense>
             </span>
           </div>
           {result.kind === "user" ? (
@@ -81,7 +86,7 @@ async function Results({ searchParams }: { searchParams: Search }) {
             <LinkButton href={`https://github.com/${result.q}`} external icon={<GithubMark />}>View on GitHub</LinkButton>
           )}
         </div>
-        <TrustGraph center={{ kind: result.kind, id: result.q }} edges={result.edges} activity={result.activity} />
+        <ResultGraph center={{ kind: result.kind, id: result.q }} edges={result.edges} activity={activity} />
       </div>
       {result.edges.length > 0 && <TrustTable kind={result.kind} edges={result.edges} />}
     </>

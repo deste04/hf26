@@ -229,6 +229,8 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
 .legend { display: flex; flex-wrap: wrap; gap: var(--space-5); font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-3); }
 .legend span { display: inline-flex; align-items: center; gap: var(--space-2); }
 .legend i { display: inline-block; width: 24px; height: 0; border-top: 2px solid; }
+/* The hint is an instruction, not a key: set apart on the right, with the pointer icon. */
+.legend .legend-hint { margin-left: auto; padding: 2px var(--space-3); border: 1px solid var(--border-subtle); border-radius: var(--radius-pill); color: var(--text-secondary); background: var(--surface-muted); }
 
 .event-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
 .event-list li { display: flex; gap: var(--space-3); align-items: baseline; border-bottom: 1px solid var(--border-subtle); padding-bottom: var(--space-3); }

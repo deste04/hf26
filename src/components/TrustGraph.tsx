@@ -1,4 +1,5 @@
 "use client";
+import { MousePointerClick } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/arc/button/button";
@@ -235,6 +236,13 @@ export default function TrustGraph({ center, edges, activity = [] }: Props) {
       // Re-color when the Arc theme switch flips data-theme on <html>.
       themeObserver = new MutationObserver(() => cy?.style(styleFor(readPalette())));
       themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "data-accent"] });
+      // Every node but the centre opens its own map: show it with the pointer.
+      cy.on("mouseover", "node[isCenter = 0]", () => {
+        if (ref.current) ref.current.style.cursor = "pointer";
+      });
+      cy.on("mouseout", "node", () => {
+        if (ref.current) ref.current.style.cursor = "";
+      });
       cy.on("tap", "node", (evt) => {
         const d = evt.target.data();
         if (d.isCenter) return;
@@ -248,7 +256,7 @@ export default function TrustGraph({ center, edges, activity = [] }: Props) {
       cyRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [center.kind, center.id, edges, router]);
+  }, [center.kind, center.id, edges, activity, router]);
 
   return (
     <div ref={wrapRef} className={`graph-wrap${fullscreen ? " is-fullscreen" : ""}`}>
@@ -276,7 +284,10 @@ export default function TrustGraph({ center, edges, activity = [] }: Props) {
         <span><i style={{ borderColor: "var(--text-muted)", borderTopStyle: "dashed" }} />Unknown voucher</span>
         <span><i style={{ borderColor: "var(--danger)" }} />Denounced{denouncedCount ? ` (${denouncedCount}, inner ring)` : ""}</span>
         {activity.length > 0 && <span><i style={{ borderColor: "var(--text-muted)", borderTopStyle: "dotted", opacity: 0.7 }} />Activity only</span>}
-        <span>Click a node to explore it</span>
+        <span className="legend-hint">
+          <MousePointerClick size={14} aria-hidden="true" />
+          Click a {center.kind === "user" ? "project" : "person"} to open its trust map
+        </span>
       </div>
     </div>
   );

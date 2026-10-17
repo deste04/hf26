@@ -1,7 +1,7 @@
 // GET /api/trust?q=<handle|owner/repo> → trust edges read live from GitHub.
 // Read-only, fixed response shape, whitelisted parameter: no caller-chosen
 // columns, filters or SQL. The fixed shape is what makes this safe.
-import { exploreSearch } from "@/server/actions/explore";
+import { activityOnly, exploreSearch } from "@/server/actions/explore";
 import { cleanQuery } from "@/lib/query";
 
 const MAX_Q = 120;
@@ -15,6 +15,7 @@ export async function GET(request: Request) {
       { status: 400 },
     );
   }
-  const { kind, q, edges, activity, issue } = await exploreSearch(raw);
+  const { kind, q, edges, issue } = await exploreSearch(raw);
+  const activity = kind === "user" ? await activityOnly(q, edges) : [];
   return Response.json({ kind, q, count: edges.length, issue, edges, activity });
 }
