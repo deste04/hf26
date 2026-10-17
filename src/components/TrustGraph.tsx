@@ -1,8 +1,7 @@
 "use client";
-import { MousePointerClick } from "lucide-react";
+import { LocateFixed, Maximize, Minimize, Minus, MousePointerClick, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/arc/button/button";
 import type { TrustEdge } from "@/server/trust/types";
 
 /** `activity`: person view only, repos the person contributed to without being in their VOUCHED.td. */
@@ -147,6 +146,14 @@ export default function TrustGraph({ center, edges, activity = [] }: Props) {
     { selector: 'node[status = "activity"]', style: { "border-color": c.border, "border-style": "dotted" as never } },
   ];
 
+  /** Zoom by a step around the middle of the view, within the graph's zoom limits. */
+  const zoomBy = (factor: number) => {
+    const cy = cyRef.current;
+    if (!cy) return;
+    const level = Math.min(cy.maxZoom(), Math.max(cy.minZoom(), cy.zoom() * factor));
+    cy.animate({ zoom: { level, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } } }, { duration: 160 });
+  };
+
   const fit = () => {
     const cy = cyRef.current;
     if (!cy) return;
@@ -265,12 +272,28 @@ export default function TrustGraph({ center, edges, activity = [] }: Props) {
         <span className="muted small">
           {fullscreen && `${nodeCount - 1} ${center.kind === "user" ? (nodeCount === 2 ? "project" : "projects") : nodeCount === 2 ? "user" : "users"}`}
         </span>
-        <Button variant="ghost" size="sm" onClick={fit}>
-          Fit
-        </Button>
-        <Button variant="ghost" size="sm" onClick={toggleFullscreen} aria-pressed={fullscreen}>
-          {fullscreen ? "Exit fullscreen" : "Fullscreen"}
-        </Button>
+        {/* Map-style controls: one compact group of icon buttons, each named for screen readers and on hover. */}
+        <div className="graph-controls" role="toolbar" aria-label="Graph view">
+          <button type="button" onClick={() => zoomBy(1.25)} aria-label="Zoom in" title="Zoom in">
+            <Plus size={16} aria-hidden="true" />
+          </button>
+          <button type="button" onClick={() => zoomBy(0.8)} aria-label="Zoom out" title="Zoom out">
+            <Minus size={16} aria-hidden="true" />
+          </button>
+          <button type="button" onClick={fit} aria-label="Fit the whole graph" title="Fit the whole graph">
+            <LocateFixed size={16} aria-hidden="true" />
+          </button>
+          <span className="graph-controls-sep" aria-hidden="true" />
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            aria-pressed={fullscreen}
+            aria-label={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+            title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+          >
+            {fullscreen ? <Minimize size={16} aria-hidden="true" /> : <Maximize size={16} aria-hidden="true" />}
+          </button>
+        </div>
       </div>
       <div
         ref={ref}
