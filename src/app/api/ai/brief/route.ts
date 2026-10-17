@@ -2,8 +2,6 @@
 // when the browser aborts the fetch (profile closed), request.signal aborts the model call.
 import { contributionBrief } from "@/server/ai/tasks";
 
-export const dynamic = "force-dynamic";
-
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const login = url.searchParams.get("login");

@@ -1,8 +1,9 @@
+import { connection } from "next/server";
 import { cancelJob, listJobs } from "@/server/ai/queue";
 
-export const dynamic = "force-dynamic";
-
-export function GET() {
+/** The queue changes every second: connection() keeps this from being prerendered. */
+export async function GET() {
+  await connection();
   return Response.json(listJobs());
 }
 

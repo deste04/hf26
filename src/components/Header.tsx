@@ -1,6 +1,7 @@
 import Link from "next/link";
 import AiQueue from "./AiQueue";
-import NavLinks from "./NavLinks";
+import { Suspense } from "react";
+import NavLinks, { NavLinksFallback } from "./NavLinks";
 import { ThemeToggle } from "./ThemeToggle";
 
 export default function Header() {
@@ -16,7 +17,9 @@ export default function Header() {
           </svg>
           <span>Vouch Explorer</span>
         </Link>
-        <NavLinks />
+        <Suspense fallback={<NavLinksFallback />}>
+          <NavLinks />
+        </Suspense>
         <div className="header-tools">
           <AiQueue />
           <ThemeToggle />

@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/arc/button/button";
-import type { TrustEdge } from "@/db/repo/trustRepo";
+import type { TrustEdge } from "@/server/trust/types";
 
 type Props = { center: { kind: "user" | "project"; id: string }; edges: TrustEdge[] };
 
@@ -77,10 +77,6 @@ export default function TrustGraph({ center, edges }: Props) {
       selector: 'node[status = "denounced"]',
       style: { "background-color": c.surface, color: c.bad, "border-color": c.bad, "border-width": 2, "font-weight": 600, "z-index": 10 },
     },
-    // Edge colour carries status and dashes carry voucher-known, so the node
-    // border is the free channel for provenance: dotted = from the shared index.
-    // Listed after the denounced rule so it layers on top without touching colour.
-    { selector: 'node[origin = "shared"]', style: { "border-style": "dotted" } },
     {
       selector: "node[isCenter = 1]",
       style: {
@@ -150,12 +146,12 @@ export default function TrustGraph({ center, edges }: Props) {
       const cytoscape = (await import("cytoscape")).default;
       if (cancelled || !ref.current) return;
       const centerId = `${center.kind}:${center.id}`;
-      const nodes = new Map<string, { id: string; label: string; kind: string; seed: number; status: string; origin: string }>();
-      nodes.set(centerId, { id: centerId, label: center.kind === "user" ? `@${center.id}` : center.id, kind: center.kind, seed: 0, status: "center", origin: "local" });
+      const nodes = new Map<string, { id: string; label: string; kind: string; status: string }>();
+      nodes.set(centerId, { id: centerId, label: center.kind === "user" ? `@${center.id}` : center.id, kind: center.kind, status: "center" });
       const els: import("cytoscape").ElementDefinition[] = [];
       edges.forEach((e, i) => {
         const other = center.kind === "user" ? { id: `project:${e.project}`, label: e.project, kind: "project" } : { id: `user:${e.login}`, label: e.login, kind: "user" };
-        if (!nodes.has(other.id)) nodes.set(other.id, { ...other, seed: e.is_seed, status: e.status, origin: e.origin });
+        if (!nodes.has(other.id)) nodes.set(other.id, { ...other, status: e.status });
         const [source, target] = center.kind === "user" ? [other.id, centerId] : [centerId, other.id];
         els.push({
           data: {
@@ -233,19 +229,12 @@ export default function TrustGraph({ center, edges }: Props) {
         className="graph"
         style={{ height: fullscreen ? undefined : t.height }}
         role="img"
-        aria-label={`Trust graph for ${center.id}: ${edges.length} vouch list entries${
-          edges.filter((e) => e.origin === "shared").length
-            ? `, ${edges.filter((e) => e.origin === "shared").length} from the shared index`
-            : ""
-        }. The table below lists the same data.`}
+        aria-label={`Trust graph for ${center.id}: ${edges.length} vouch list entries. The table below lists the same data.`}
       />
       <div className="legend" aria-hidden="true">
         <span><i style={{ borderColor: "var(--success)" }} />Vouched</span>
         <span><i style={{ borderColor: "var(--text-muted)", borderTopStyle: "dashed" }} />Unknown voucher</span>
         <span><i style={{ borderColor: "var(--danger)" }} />Denounced{denouncedCount ? ` (${denouncedCount}, inner ring)` : ""}</span>
-        {edges.some((e) => e.origin === "shared") && (
-          <span><i style={{ borderColor: "var(--text-muted)", borderStyle: "dotted" }} />From shared index</span>
-        )}
         <span>Click a node to explore it</span>
       </div>
     </div>

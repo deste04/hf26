@@ -1,6 +1,4 @@
-// GitHub helpers with NO database dependency, so standalone processes (which must
-// not load the SQLite client) can reuse the auth, pacing and retry logic.
-// Cached, DB-backed wrappers live in ./github.ts.
+// GitHub auth, pacing and retry, shared by the cached readers in ./github.ts and ./vouch.ts.
 import { Octokit } from "@octokit/rest";
 import { execSync } from "node:child_process";
 
@@ -27,7 +25,7 @@ export function hasToken(): boolean {
   return authed;
 }
 
-export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const split = (fullName: string) => {
   const [owner, repo] = fullName.split("/");
@@ -47,28 +45,4 @@ export async function withRetry<T>(fn: () => Promise<T>, tries = 4): Promise<T> 
       await sleep(wait);
     }
   }
-}
-
-/** Raw file at a ref (not cached: callers compare SHAs themselves). */
-export async function getFile(fullName: string, path: string, ref?: string): Promise<{ text: string; sha: string } | null> {
-  try {
-    const { data } = await withRetry(() => octokit().repos.getContent({ ...split(fullName), path, ref }));
-    if (Array.isArray(data) || data.type !== "file" || !("content" in data)) return null;
-    return { text: Buffer.from(data.content, "base64").toString("utf8"), sha: data.sha };
-  } catch (err) {
-    if ((err as { status?: number }).status === 404) return null;
-    throw err;
-  }
-}
-
-/** Commits touching a file, oldest first. */
-export async function fileCommits(fullName: string, path: string, max = 40) {
-  const { data } = await withRetry(() => octokit().repos.listCommits({ ...split(fullName), path, per_page: max }));
-  return data
-    .map((c) => ({
-      sha: c.sha,
-      author: c.author?.login ?? null, // only a resolved GitHub account, never the free-text name
-      date: c.commit.committer?.date ?? c.commit.author?.date ?? new Date().toISOString(),
-    }))
-    .reverse();
 }

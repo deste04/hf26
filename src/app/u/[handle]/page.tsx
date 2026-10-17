@@ -1,24 +1,43 @@
 import Link from "next/link";
+import { connection } from "next/server";
+import { Suspense } from "react";
 import { Avatar } from "@/components/arc/avatar/avatar";
 import { Badge } from "@/components/arc/badge/badge";
 import { BriefCard } from "@/components/BriefCard";
 import { ContributionHeatmap } from "@/components/ContributionHeatmap";
 import { GithubMark, LinkButton } from "@/components/LinkButton";
-import { SampleChip } from "@/components/SampleChip";
+import { Skeleton } from "@/components/arc/skeleton/skeleton";
+import { cleanQuery } from "@/lib/query";
 import { getProfileData } from "@/server/actions/pages";
 import "./profile.css";
-import { cleanQuery } from "@/lib/query";
 
-export const dynamic = "force-dynamic";
+type Params = Promise<{ handle: string }>;
 
-export default async function ProfilePage({ params }: { params: Promise<{ handle: string }> }) {
+/** The handle comes from the URL, so the profile streams in under Suspense (Cache Components). */
+export default function ProfilePage({ params }: { params: Params }) {
+  return (
+    <Suspense
+      fallback={
+        <main className="container profile-page">
+          <aside className="card profile-aside"><Skeleton label="Loading profile" avatar lines={3} /></aside>
+          <div className="profile-main"><div className="card"><Skeleton label="Loading activity" lines={5} /></div></div>
+        </main>
+      }
+    >
+      <Profile params={params} />
+    </Suspense>
+  );
+}
+
+async function Profile({ params }: { params: Params }) {
+  // Live GitHub data for one person: always rendered per request, never prerendered.
+  await connection();
   const { handle } = await params;
   const login = cleanQuery(decodeURIComponent(handle));
   const data = await getProfileData(login);
   const vouched = data.edges.filter((e) => e.status === "vouched");
   const denounced = data.edges.filter((e) => e.status === "denounced");
   const unknownVoucher = vouched.filter((e) => !e.voucher);
-  const anySeed = data.edges.some((e) => e.is_seed === 1);
   const plural = (n: number) => (n === 1 ? "" : "s");
 
   return (
@@ -31,18 +50,19 @@ export default async function ProfilePage({ params }: { params: Promise<{ handle
           <span className="muted small">Public GitHub activity only</span>
         </div>
 
-        <div className="profile-pills">
+        {data.trustStatus === "ok" && <div className="profile-pills">
           <Badge tone="success">
             Vouched in {vouched.length} project{plural(vouched.length)}
           </Badge>
           {unknownVoucher.length > 0 && <Badge tone="neutral">Unknown voucher in {unknownVoucher.length}</Badge>}
           {denounced.length > 0 && <Badge tone="danger">Denounced in {denounced.length}</Badge>}
-        </div>
+        </div>}
 
-        <div className="profile-vouchers">
+        {/* Shown only when the vouch lists could actually be searched: an unknown is never presented as "not vouched". */}
+        {data.trustStatus === "ok" && <div className="profile-vouchers">
           <span className="profile-label">Vouched by</span>
           {vouched.length === 0 ? (
-            <span className="muted small">Not vouched in any indexed VOUCHED.td.</span>
+            <span className="muted small">Not vouched in any VOUCHED.td GitHub found.</span>
           ) : (
             <ul>
               {vouched.map((e) => (
@@ -55,8 +75,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ handle
                   ·{" "}
                   <Link href={`/?q=${encodeURIComponent(e.project)}`} className="mono">
                     {e.project}
-                  </Link>{" "}
-                  <SampleChip show={e.is_seed === 1} />
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -76,13 +95,12 @@ export default async function ProfilePage({ params }: { params: Promise<{ handle
               </ul>
             </>
           )}
-        </div>
+        </div>}
 
         <LinkButton href={`https://github.com/${data.login}`} external icon={<GithubMark />}>
           View on GitHub
         </LinkButton>
-        {anySeed && <SampleChip show />}
-        {data.githubError && <p className="muted small">GitHub unavailable; showing cached data where possible.</p>}
+        {data.githubError && <p className="muted small">GitHub isn&apos;t answering; some activity may be missing.</p>}
       </aside>
 
       <div className="profile-main">
@@ -108,7 +126,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ handle
                     <th scope="col">PRs merged</th>
                     <th scope="col">PRs closed</th>
                     <th scope="col">Reviews</th>
-                    <th scope="col">Vouch</th>
+                    {data.trustStatus === "ok" && <th scope="col">Vouch</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -122,7 +140,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ handle
                       <td>{r.merged}</td>
                       <td>{r.closed}</td>
                       <td>{r.reviews}</td>
-                      <td>
+                      {data.trustStatus === "ok" && <td>
                         {r.vouch === "vouched" ? (
                           <Badge tone="success" size="sm">Vouched</Badge>
                         ) : r.vouch === "denounced" ? (
@@ -130,7 +148,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ handle
                         ) : (
                           <span className="muted">Not listed</span>
                         )}
-                      </td>
+                      </td>}
                     </tr>
                   ))}
                 </tbody>

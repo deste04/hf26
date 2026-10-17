@@ -7,12 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "vitest run",
-    "db:push": "drizzle-kit push",
-    "db:seed": "tsx scripts/seed.ts",
-    "crawl": "tsx scripts/crawl.ts",
-    "enrich": "tsx scripts/enrich.ts",
-    "crawl:shared": "tsx scripts/sharedCrawl.ts"
+    "test": "vitest run"
   },
   "dependencies": {
     "@octokit/rest": "^22.0.1",
@@ -20,27 +15,19 @@
     "@radix-ui/react-select": "^2.4.1",
     "@radix-ui/react-tooltip": "^1.4.1",
     "@tanstack/react-query": "^5.104.3",
-    "better-sqlite3": "^13.0.3",
     "cytoscape": "^3.34.4",
-    "drizzle-orm": "^0.45.4",
     "lucide-react": "^1.59.0",
     "motion": "^14.3.0",
     "next": "16.4.2",
-    "pg": "^8.23.1",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.12",
     "@types/cytoscape": "^3.21.9",
     "@types/node": "^22",
-    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "dotenv": "^16.4.7",
-    "drizzle-kit": "^0.31.11",
-    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.0.5"
   }

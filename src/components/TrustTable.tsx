@@ -3,8 +3,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/arc/badge/badge";
 import { Button } from "@/components/arc/button/button";
-import SampleChip from "@/components/SampleChip";
-import type { TrustEdge } from "@/db/repo/trustRepo";
+import type { TrustEdge } from "@/server/trust/types";
 
 type Status = "all" | "vouched" | "denounced";
 const PAGE = 50;
@@ -81,9 +80,7 @@ export function TrustTable({ kind, edges }: { kind: "user" | "project"; edges: T
                       <Link className="mono" href={`/?q=${encodeURIComponent(e.project)}`}>{e.project}</Link>
                     ) : (
                       <Link className="mono" href={`/u/${encodeURIComponent(e.login)}`}>@{e.login}</Link>
-                    )}{" "}
-                    <SampleChip show={e.is_seed} />
-                    {e.origin === "shared" && <span className="chip">Shared index</span>}
+                    )}
                   </td>
                   <td>
                     <Badge tone={e.status === "vouched" ? "success" : "danger"} size="sm">

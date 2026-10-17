@@ -1,32 +1,33 @@
-"use server";
-import { sharedTrustRepo } from "../../db/neon/sharedTrustRepo";
-import { projectsRepo, trustRepo, usersRepo, vouchRepo } from "../../db/repo";
-import { mergeEdges } from "../trust/merge";
+// Explore's data: a project's VOUCHED.td or a person's entries, read live from GitHub (see ../vouch.ts).
 import { cleanQuery } from "../../lib/query";
+import type { TrustEdge } from "../trust/types";
+import { projectEdges, userEdges } from "../vouch";
 
-export async function exploreSearch(q: string) {
-  const query = cleanQuery(q);
-  const kind = query.includes("/") ? ("project" as const) : ("user" as const);
-  const local = kind === "project" ? trustRepo.edgesForProject(query) : trustRepo.edgesForUser(query);
-  // The shared index is an enrichment: if it fails or is unconfigured, local still renders.
-  const settled = await Promise.allSettled([
-    kind === "project" ? sharedTrustRepo.edgesForProject(query) : sharedTrustRepo.edgesForUser(query),
-  ]);
-  const shared = settled[0].status === "fulfilled" ? settled[0].value : [];
-  const edges = mergeEdges(local, shared);
-  return { kind, q: query, edges, sharedCount: edges.length - local.length };
-}
+export type ExploreResult = {
+  kind: "user" | "project";
+  q: string;
+  edges: TrustEdge[];
+  /** Why GitHub returned nothing, when it didn't: no VOUCHED.td, person search without a token, or an API error. */
+  issue: null | "no_vouch_file" | "needs_token" | "unavailable";
+};
 
-export async function indexStats() {
-  const shared = await sharedTrustRepo.counts().catch(() => null);
-  return {
-    projects: projectsRepo.count(),
-    users: usersRepo.count(),
-    ...vouchRepo.counts(),
-    recent: vouchRepo.recentEvents(10),
-    suggestions: trustRepo.suggestLogins(8),
-    projectSuggestions: trustRepo.suggestProjects(4),
-    // Reported separately, never summed into the local totals.
-    shared,
-  };
+export async function exploreSearch(raw: string): Promise<ExploreResult> {
+  const q = cleanQuery(raw);
+  const kind = q.includes("/") ? ("project" as const) : ("user" as const);
+  let edges: TrustEdge[] = [];
+  let issue: ExploreResult["issue"] = null;
+  if (kind === "project") {
+    try {
+      const p = await projectEdges(q);
+      if (p) edges = p.edges;
+      else issue = "no_vouch_file";
+    } catch {
+      issue = "unavailable";
+    }
+  } else {
+    const u = await userEdges(q);
+    if (u.status === "ok") edges = u.edges;
+    else issue = u.status;
+  }
+  return { kind, q, edges, issue };
 }

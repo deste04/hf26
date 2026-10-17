@@ -7,7 +7,15 @@ const LINKS = [
 ];
 
 export default function NavLinks() {
-  const path = usePathname() ?? "/";
+  return <Links path={usePathname() ?? "/"} />;
+}
+
+/** Same links without a current page: the fallback while a dynamic route's pathname is still unknown. */
+export function NavLinksFallback() {
+  return <Links path="" />;
+}
+
+function Links({ path }: { path: string }) {
   return (
     <nav className="nav" aria-label="Main">
       {LINKS.map((l) => (
