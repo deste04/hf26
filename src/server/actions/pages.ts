@@ -1,23 +1,27 @@
 "use server";
 import { isGithubLogin } from "../../lib/query";
-import { contributionCalendar, getUser, userContributions, type Calendar, type Contribution, type GhUser } from "../github";
+import { contributionCalendar, getUser, userCommitCounts, userContributions, type Calendar, type Contribution, type GhUser } from "../github";
 import type { TrustEdge } from "../trust/types";
 import { userEdges, type UserTrust } from "../vouch";
 
 export type RepoActivity = {
   repo: string;
+  commits: number;
   merged: number;
   closed: number;
   open: number;
   reviews: number;
   issues: number;
   vouch: "vouched" | "denounced" | null;
+  /** Repos whose VOUCHED.td copies this project's list. */
+  copies: number;
   urls: string[];
 };
 
 export async function getProfileData(login: string) {
   let user: GhUser | null = null;
   let contributions: Contribution[] = [];
+  let commits: Record<string, number> = {};
   let githubError: string | null = null;
   let calendar: Calendar | null = null;
   let trust: UserTrust = { status: "unavailable", message: "Not a GitHub login." };
@@ -35,6 +39,11 @@ export async function getProfileData(login: string) {
       githubError = (err as Error).message;
     }
     try {
+      commits = await userCommitCounts(login);
+    } catch {
+      /* commit counts are extra: the table still shows PRs, issues and reviews */
+    }
+    try {
       calendar = await contributionCalendar(login);
     } catch {
       /* the profile just skips the calendar */
@@ -45,7 +54,7 @@ export async function getProfileData(login: string) {
   const row = (repo: string) => {
     let r = byRepo.get(repo.toLowerCase());
     if (!r) {
-      r = { repo, merged: 0, closed: 0, open: 0, reviews: 0, issues: 0, vouch: null, urls: [] };
+      r = { repo, commits: 0, merged: 0, closed: 0, open: 0, reviews: 0, issues: 0, vouch: null, copies: 0, urls: [] };
       byRepo.set(repo.toLowerCase(), r);
     }
     return r;
@@ -57,10 +66,15 @@ export async function getProfileData(login: string) {
     else r[c.state]++;
     r.urls.push(c.url);
   }
-  for (const e of edges) row(e.project).vouch = e.status;
-  const activity = [...byRepo.values()].sort(
-    (a, b) => b.merged + b.closed + b.open + b.reviews + b.issues - (a.merged + a.closed + a.open + a.reviews + a.issues),
-  );
+  for (const [repo, n] of Object.entries(commits)) row(repo).commits = n;
+  for (const e of edges) {
+    const r = row(e.project);
+    r.vouch = e.status;
+    r.copies = e.copies?.length ?? 0;
+  }
+  // Every project with a vouch list entry comes first, even with no activity; then the busiest repos.
+  const total = (r: RepoActivity) => r.commits + r.merged + r.closed + r.open + r.reviews + r.issues;
+  const activity = [...byRepo.values()].sort((a, b) => Number(!!b.vouch) - Number(!!a.vouch) || total(b) - total(a));
   // Years the account has existed, newest first, for the calendar's year switch.
   const thisYear = new Date().getUTCFullYear();
   const firstYear = user?.created_at ? new Date(user.created_at).getUTCFullYear() : thisYear;

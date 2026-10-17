@@ -39,7 +39,8 @@
 .brief-areas { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .brief-footer { margin: 0; font-size: var(--text-xs); color: var(--text-secondary); border-top: 1px solid var(--border-subtle); padding-top: var(--space-3); }
 
-.profile-table { min-width: 520px; }
+.profile-table { min-width: 680px; }
+.profile-table td:not(:first-child), .profile-table th:not(:first-child) { font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 .brief-vouch { padding: var(--space-3) var(--space-4); border-radius: var(--radius-control); background: color-mix(in oklab, var(--success) 8%, var(--surface)); border: 1px solid color-mix(in oklab, var(--success) 22%, var(--border)); }
 .brief-vouch.is-warn { background: color-mix(in oklab, var(--danger) 7%, var(--surface)); border-color: color-mix(in oklab, var(--danger) 26%, var(--border)); }
@@ -49,3 +50,6 @@
 .heatmap-year { width: 9rem; }
 .heatmap-year label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .heatmap-year[aria-busy="true"] { opacity: .7; }
+
+/* "+N copied lists" carries its explanation in a tooltip. */
+.copies-note { cursor: help; text-decoration: underline dotted; text-underline-offset: 3px; }

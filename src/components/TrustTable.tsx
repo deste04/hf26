@@ -81,7 +81,9 @@ export function TrustTable({ kind, edges }: { kind: "user" | "project"; edges: T
                         <Link className="mono" href={`/?q=${encodeURIComponent(e.project)}`}>{e.project}</Link>
                         {e.copies?.length ? (
                           <details className="copies">
-                            <summary>+{e.copies.length} {e.copies.length === 1 ? "copy" : "copies"} of this list</summary>
+                            <summary title="Forks and clones of this project that carry a copy of its VOUCHED.td. They repeat its decision, so they are not counted separately.">
+                              +{e.copies.length} {e.copies.length === 1 ? "repo copies" : "repos copy"} this list
+                            </summary>
                             <ul>
                               {e.copies.map((c) => (
                                 <li key={c}><a className="mono" href={`https://github.com/${c}`} target="_blank" rel="noreferrer">{c}</a></li>

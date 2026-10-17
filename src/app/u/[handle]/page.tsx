@@ -39,6 +39,8 @@ async function Profile({ params }: { params: Params }) {
   const denounced = data.edges.filter((e) => e.status === "denounced");
   const unknownVoucher = vouched.filter((e) => !e.voucher);
   const plural = (n: number) => (n === 1 ? "" : "s");
+  const copiesTip = (n: number) =>
+    `${n} other repo${n === 1 ? "" : "s"} (forks and clones of this project) carry a copy of its VOUCHED.td. They repeat the decision of this project, so they are not counted as separate vouches.`;
 
   return (
     <main className="container profile-page">
@@ -76,7 +78,9 @@ async function Profile({ params }: { params: Params }) {
                   <Link href={`/?q=${encodeURIComponent(e.project)}`} className="mono">
                     {e.project}
                   </Link>
-                  {e.copies?.length ? <span className="muted small"> +{e.copies.length} {e.copies.length === 1 ? "copy" : "copies"}</span> : null}
+                  {e.copies?.length ? (
+                    <span className="muted small copies-note" title={copiesTip(e.copies.length)}> +{e.copies.length} copied list{plural(e.copies.length)}</span>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -124,8 +128,10 @@ async function Profile({ params }: { params: Params }) {
                 <thead>
                   <tr>
                     <th scope="col">Project</th>
+                    <th scope="col">Commits</th>
                     <th scope="col">PRs merged</th>
-                    <th scope="col">PRs closed</th>
+                    <th scope="col">PRs open</th>
+                    <th scope="col">Issues</th>
                     <th scope="col">Reviews</th>
                     {data.trustStatus === "ok" && <th scope="col">Vouch</th>}
                   </tr>
@@ -138,18 +144,25 @@ async function Profile({ params }: { params: Params }) {
                           {r.repo}
                         </a>
                       </td>
+                      <td>{r.commits}</td>
                       <td>{r.merged}</td>
-                      <td>{r.closed}</td>
+                      <td>{r.open}</td>
+                      <td>{r.issues}</td>
                       <td>{r.reviews}</td>
-                      {data.trustStatus === "ok" && <td>
-                        {r.vouch === "vouched" ? (
-                          <Badge tone="success" size="sm">Vouched</Badge>
-                        ) : r.vouch === "denounced" ? (
-                          <Badge tone="danger" size="sm">Denounced</Badge>
-                        ) : (
-                          <span className="muted">Not listed</span>
-                        )}
-                      </td>}
+                      {data.trustStatus === "ok" && (
+                        <td>
+                          {r.vouch === "vouched" ? (
+                            <Badge tone="success" size="sm">Vouched</Badge>
+                          ) : r.vouch === "denounced" ? (
+                            <Badge tone="danger" size="sm">Denounced</Badge>
+                          ) : (
+                            <span className="muted">Not listed</span>
+                          )}
+                          {r.copies > 0 && (
+                            <span className="muted small copies-note" title={copiesTip(r.copies)}> +{r.copies} copied list{plural(r.copies)}</span>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

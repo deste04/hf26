@@ -45,7 +45,7 @@ export type Contribution = {
   created_at: string;
 };
 
-/** Up to 30 recent public contributions: authored PRs, reviewed PRs, authored issues. */
+/** Recent public contributions, newest first within each kind: up to 50 authored PRs, 30 reviews and 50 issues. */
 export async function userContributions(login: string): Promise<Contribution[]> {
   "use cache";
   cacheLife("hours");
@@ -66,11 +66,28 @@ export async function userContributions(login: string): Promise<Contribution[]> 
     }));
   };
   const [prs, reviews, issues] = await Promise.all([
-    search(`author:${login} type:pr is:public`, "pr", 15),
-    search(`reviewed-by:${login} -author:${login} type:pr is:public`, "review", 10),
-    search(`author:${login} type:issue is:public`, "issue", 5),
+    search(`author:${login} type:pr is:public`, "pr", 50),
+    search(`reviewed-by:${login} -author:${login} type:pr is:public`, "review", 30),
+    search(`author:${login} type:issue is:public`, "issue", 50),
   ]);
-  return [...prs, ...reviews, ...issues].slice(0, 30);
+  return [...prs, ...reviews, ...issues];
+}
+
+/**
+ * Commits per repo among the person's 100 most recent public commits. Commit search sees repos the issue search
+ * misses (work pushed straight to a branch, or repos too new for that index).
+ */
+export async function userCommitCounts(login: string): Promise<Record<string, number>> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(personTag(login));
+  const { data } = await withRetry(
+    () => octokit().search.commits({ q: `author:${login}`, sort: "author-date", order: "desc", per_page: 100 }),
+    1,
+  );
+  const counts: Record<string, number> = {};
+  for (const c of data.items) counts[c.repository.full_name] = (counts[c.repository.full_name] ?? 0) + 1;
+  return counts;
 }
 
 export type CalendarDay = { date: string; count: number };
