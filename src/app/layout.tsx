@@ -14,7 +14,7 @@ const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
   metadataBase: SITE_URL,
-  title: { default: `${SITE_NAME}: ${SITE_TAGLINE}`, template: `%s - ${SITE_NAME}` },
+  title: { default: `${SITE_NAME}: ${SITE_TAGLINE}`, template: "%s" },
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
   keywords: ["Vouch", "VOUCHED.td", "open source", "maintainers", "trust graph", "GitHub", "contributors", "AI pull requests"],
