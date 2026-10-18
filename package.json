@@ -16,6 +16,7 @@
     "@radix-ui/react-tooltip": "^1.4.1",
     "@tanstack/react-query": "^5.104.3",
     "cytoscape": "^3.34.4",
+    "jose": "^6.2.12",
     "lucide-react": "^1.59.0",
     "motion": "^14.3.0",
     "next": "16.4.2",

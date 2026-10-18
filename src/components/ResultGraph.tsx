@@ -14,6 +14,11 @@ const plural = (n: number, one: string, other: string) => `${fmt(n)} ${n === 1 ?
 
 async function getPart<T>(q: string, part: "list" | "vouchers" | "activity", signal: AbortSignal): Promise<T> {
   const res = await fetch(`/api/trust?q=${encodeURIComponent(q)}&part=${part}`, { signal });
+  // The server's GitHub token is spent and nobody is signed in: sign in, then come back to this search.
+  if (res.status === 401) {
+    window.location.assign(`/login?error=limit&next=${encodeURIComponent(location.pathname + location.search)}`);
+    return new Promise<T>(() => {});
+  }
   if (!res.ok) throw new Error(`GET /api/trust ${res.status}`);
   return res.json();
 }

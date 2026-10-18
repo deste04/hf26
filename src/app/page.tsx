@@ -15,8 +15,8 @@ export default function ExplorePage({ searchParams }: { searchParams: Search }) 
         <div className="explore-intro">
           <h1 id="explore-title">Check who's trusted before AI slop lands in your PRs</h1>
           <p>
-            One graph of every project's <span className="mono">VOUCHED.td</span> list. Search a person to see who vouches for
-            them, or a project to see who it trusts.
+            Vouch Explorer joins every project's <span className="mono">VOUCHED.td</span> list into one graph. Search a person
+            to see who vouches for them, or a project to see who it trusts.
           </p>
         </div>
         <Suspense fallback={<SearchBar defaultValue="" />}>

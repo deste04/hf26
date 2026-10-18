@@ -10,6 +10,7 @@ import { GithubMark, LinkButton } from "@/components/LinkButton";
 import { ProfileCharts, type WeekTotal } from "@/components/ProfileCharts";
 import { cleanQuery } from "@/lib/query";
 import { accountYears, profileActivity, profileCalendar, profileUser } from "@/server/profile";
+import { loginIfServerTokenFailed, readAsViewer } from "@/server/session";
 import "./profile.css";
 
 type Params = Promise<{ handle: string }>;
@@ -40,8 +41,12 @@ async function Profile({ params }: { params: Params }) {
   // Live GitHub data for one person: always rendered per request, never prerendered.
   await connection();
   const { handle } = await params;
+  // GitHub is read with the signed-in person's token for the whole render, the sections below included.
+  await readAsViewer();
   const login = cleanQuery(decodeURIComponent(handle));
+  const path = `/u/${encodeURIComponent(login)}`;
   const { user, error } = await profileUser(login);
+  loginIfServerTokenFailed(path);
   const shown = user?.login ?? login;
 
   return (
@@ -90,6 +95,7 @@ function SectionSkeleton({ title, label }: { title: string; label: string }) {
 /** Vouch badges. Shown only when the vouch lists could be searched: an unknown is never "not vouched". */
 async function TrustSummary({ login }: { login: string }) {
   const { trust, edges, rows } = await profileActivity(login);
+  loginIfServerTokenFailed(`/u/${encodeURIComponent(login)}`);
   if (trust.status !== "ok") return null;
   const vouched = edges.filter((e) => e.status === "vouched").length;
   const denounced = edges.filter((e) => e.status === "denounced").length;
@@ -135,6 +141,7 @@ async function ChartsSection({ login, calendarLogin }: { login: string; calendar
 
 async function CalendarSection({ login, years }: { login: string; years: number[] }) {
   const calendar = await profileCalendar(login);
+  loginIfServerTokenFailed(`/u/${encodeURIComponent(login)}`);
   if (!calendar) return null;
   return (
     <section className="card profile-section" aria-labelledby="calendar-title">
@@ -146,6 +153,7 @@ async function CalendarSection({ login, years }: { login: string; years: number[
 
 async function ActivitySection({ login }: { login: string }) {
   const { rows, period, trust, error } = await profileActivity(login);
+  loginIfServerTokenFailed(`/u/${encodeURIComponent(login)}`);
   const showVouch = trust.status === "ok";
   return (
     <section className="card profile-section" aria-labelledby="activity-title">

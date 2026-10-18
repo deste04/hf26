@@ -1,0 +1,31 @@
+.signIn { container: sign-in / inline-size; width: min(100%, 432px); min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-surface); background: var(--surface); color: var(--foreground); font-family: var(--font-body); letter-spacing: var(--tracking-body); }
+.step { display: grid; min-width: 0; padding: var(--space-8); }
+
+.heading { display: grid; gap: var(--space-2); margin-bottom: var(--space-6); }
+.heading h2 { margin: 0; font-family: var(--font-display); font-size: var(--text-3xl); font-weight: 400; letter-spacing: var(--tracking-display); line-height: var(--leading-display); text-wrap: balance; outline: none; }
+.heading p { margin: 0; color: var(--text-secondary); font-size: var(--text-sm); line-height: var(--leading-body); text-wrap: pretty; }
+
+.wide { width: 100%; }
+.error { margin: var(--space-3) 0 0; color: var(--danger); font-size: var(--text-sm); line-height: var(--leading-body); }
+.textButton { border: 0; border-radius: 4px; padding: 0; background: none; color: var(--foreground); font: inherit; font-weight: 500; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; cursor: pointer; transition: text-decoration-color var(--duration-fast) var(--ease-standard); }
+
+.providerMark { flex: none; }
+
+.footer { display: flex; min-height: 48px; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-1) var(--space-4); border-top: 1px solid var(--border); padding: var(--space-3) var(--space-8); color: var(--text-muted); font-size: var(--text-xs); line-height: var(--leading-body); }
+.status { position: relative; display: block; min-width: 0; flex: 1 1 12rem; }
+.switch { color: var(--text-secondary); white-space: nowrap; }
+.switch .textButton { text-decoration-color: transparent; }
+.status > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+@media (hover: hover) and (pointer: fine) {
+  .textButton:hover { text-decoration-color: currentColor; }
+}
+
+@container sign-in (max-width: 380px) {
+  .step { padding: var(--space-6) var(--space-5); }
+  .heading h2 { font-size: var(--text-2xl); }
+  .footer { padding-inline: var(--space-5); }
+}
+@media (max-width: 480px) { .signIn { border-radius: var(--radius-panel); } }
+@media (prefers-reduced-motion: reduce) { .textButton { transition: none; } }

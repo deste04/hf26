@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AccountMenu from "./AccountMenu";
 import AiQueue from "./AiQueue";
 import { Suspense } from "react";
 import NavLinks, { NavLinksFallback } from "./NavLinks";
@@ -23,6 +24,7 @@ export default function Header() {
         <div className="header-tools">
           <AiQueue />
           <ThemeToggle />
+          <AccountMenu />
         </div>
       </div>
     </header>

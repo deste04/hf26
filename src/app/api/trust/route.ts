@@ -5,6 +5,8 @@
 // and the slow parts (vouchers from blame, activity) separately. Each part re-reads the list from the cache.
 import { activityOnly, exploreSearch, vouchersFor } from "@/server/actions/explore";
 import { cleanQuery } from "@/lib/query";
+import { serverTokenFailed } from "@/server/githubCore";
+import { readAsViewer } from "@/server/session";
 
 const MAX_Q = 120;
 const VALID_Q = /^[A-Za-z0-9][A-Za-z0-9._\/-]*$/;
@@ -20,11 +22,19 @@ export async function GET(request: Request) {
       { status: 400 },
     );
   }
+  await readAsViewer();
+  const response = await answer(raw, part);
+  // Only the server's token can fail here (a signed-in person reads with their own): the page sends them to sign in.
+  if (serverTokenFailed()) return Response.json({ error: "login_required" }, { status: 401 });
+  return Response.json(response);
+}
+
+async function answer(raw: string, part: string | null) {
   const result = await exploreSearch(raw);
   const { kind, q, edges: listed, issue } = result;
-  if (part === "list") return Response.json(result);
-  if (part === "vouchers") return Response.json(kind === "user" && listed.length > 0 ? await vouchersFor(q, listed) : listed);
-  if (part === "activity") return Response.json(kind === "user" && !issue ? await activityOnly(q, listed) : []);
+  if (part === "list") return result;
+  if (part === "vouchers") return kind === "user" && listed.length > 0 ? await vouchersFor(q, listed) : listed;
+  if (part === "activity") return kind === "user" && !issue ? await activityOnly(q, listed) : [];
   const [edges, activity] = kind === "user" ? await Promise.all([vouchersFor(q, listed), activityOnly(q, listed)]) : [listed, []];
-  return Response.json({ kind, q, count: edges.length, issue, edges, activity });
+  return { kind, q, count: edges.length, issue, edges, activity };
 }
