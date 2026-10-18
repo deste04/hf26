@@ -19,10 +19,11 @@ export default function ExplorePage({ searchParams }: { searchParams: Search }) 
     <div className="container explore">
       <section className="explore-hero" aria-labelledby="explore-title">
         <div className="explore-intro">
-          <h1 id="explore-title">Who is trusted where?</h1>
+          <h1 id="explore-title">Check who's trusted before AI slop lands in your PRs</h1>
           <p>
-            Public <span className="mono">VOUCHED.td</span> files across GitHub. Search a person to see who vouches for them, or a
-            project to see who it trusts.
+            Projects answer with <span className="mono">VOUCHED.td</span> lists, but every list is an island: someone vouched in
+            five repos starts from zero in the sixth. Vouch Explorer joins them into one graph. Search a person to see who vouches
+            for them, or a project to see who it trusts.
           </p>
         </div>
         <Suspense fallback={<SearchBar defaultValue="" />}>
