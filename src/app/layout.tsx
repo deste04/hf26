@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Outfit } from "next/font/google";
 import Link from "next/link";
+import { Suspense } from "react";
 import Header from "@/components/Header";
 import { ScrollReset } from "@/components/ScrollReset";
 import Providers from "@/components/Providers";
@@ -64,7 +65,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <div className="page-world" aria-hidden="true" />
         <Providers>
-          <ScrollReset />
+          {/* usePathname suspends on /u/[handle], whose handle is only known per request. */}
+          <Suspense fallback={null}>
+            <ScrollReset />
+          </Suspense>
           <Header />
           <main>{children}</main>
           <footer className="site-footer">
