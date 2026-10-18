@@ -59,8 +59,6 @@ npm test                # parser and AI grounding tests
 - Repo lookups (`owner/repo`) work without a token. Person lookups need `GITHUB_TOKEN`, because GitHub code search refuses anonymous calls.
 - `GET /api/trust?q=<handle|owner/repo>` returns the same data as JSON.
 
-Try it on [`Calonca/hf26`](http://localhost:3000/?q=Calonca/hf26) (this repo uses Vouch for its own team) or [`ghostty-org/ghostty`](http://localhost:3000/?q=ghostty-org/ghostty) (377 users, 24 denounced).
-
 ## Limits
 
 - Forks that keep the original list inflate some counts.
@@ -77,7 +75,7 @@ Try it on [`Calonca/hf26`](http://localhost:3000/?q=Calonca/hf26) (this repo use
 
 ## Contributors
 
-- **Alessandro De Stefano** ([@deste04](https://github.com/deste04)): explored running the model in the browser with transformers.js; its short-ID evidence scheme and compact prompts were adopted on main
+- **Alessandro De Stefano** ([@deste04](https://github.com/deste04))
 - **Alessandro La Conca** ([@Calonca](https://github.com/Calonca))
 - **Fabian** ([@fabianhogger](https://github.com/fabianhogger))
 
