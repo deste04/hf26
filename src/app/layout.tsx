@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Outfit } from "next/font/google";
+import Link from "next/link";
 import Header from "@/components/Header";
 import Providers from "@/components/Providers";
 import "@/components/arc/foundation.css";
@@ -32,6 +33,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Providers>
           <Header />
           <main>{children}</main>
+          <footer className="site-footer">
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link>
+            <a href="https://github.com/deste04/hf26">Source</a>
+          </footer>
         </Providers>
       </body>
     </html>

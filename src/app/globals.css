@@ -351,3 +351,19 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
 /* Theme switch (ThemeToggle.tsx): every element flips in the same frame, then the page crossfades as one image. */
 .theme-switching, .theme-switching *, .theme-switching *::before, .theme-switching *::after { transition: none !important; }
 ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+
+/* Privacy and terms: one readable column of text. */
+.legal { max-width: 760px; }
+.legal h2 { font-size: var(--text-lg); margin: var(--space-8) 0 var(--space-2); }
+.legal p, .legal li { line-height: 1.65; }
+.legal p { margin: 0 0 var(--space-3); }
+.legal ul { margin: 0 0 var(--space-3); padding-left: var(--space-5); }
+.legal li { margin-bottom: var(--space-2); }
+
+/* Footer */
+.site-footer {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-5);
+  padding: var(--space-6) var(--space-4) var(--space-8); font-size: var(--text-sm);
+}
+.site-footer a { color: var(--text-secondary); text-decoration: none; }
+.site-footer a:hover { color: var(--foreground); text-decoration: underline; }
