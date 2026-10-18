@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/arc/skeleton/skeleton";
 import { BriefCard } from "@/components/BriefCard";
 import { ContributionHeatmap } from "@/components/ContributionHeatmap";
 import { GithubMark, LinkButton } from "@/components/LinkButton";
+import { ProfileCharts, type WeekTotal } from "@/components/ProfileCharts";
 import { cleanQuery } from "@/lib/query";
 import { accountYears, profileActivity, profileCalendar, profileUser } from "@/server/profile";
 import "./profile.css";
@@ -66,6 +67,9 @@ async function Profile({ params }: { params: Params }) {
         <Suspense fallback={<SectionSkeleton title="GitHub activity" label="Loading the contribution calendar" />}>
           <CalendarSection login={shown} years={accountYears(user)} />
         </Suspense>
+        <Suspense fallback={<SectionSkeleton title="Activity at a glance" label="Drawing the charts" />}>
+          <ChartsSection login={login} calendarLogin={shown} />
+        </Suspense>
         <Suspense fallback={<SectionSkeleton title="Activity by project" label="Reading activity from GitHub" />}>
           <ActivitySection login={login} />
         </Suspense>
@@ -98,6 +102,34 @@ async function TrustSummary({ login }: { login: string }) {
       {notVouched > 0 && <Badge tone="neutral">Not vouched in {notVouched} repo{plural(notVouched)}</Badge>}
       {denounced > 0 && <Badge tone="danger">Denounced in {denounced}</Badge>}
     </div>
+  );
+}
+
+/**
+ * Weekly totals for the sparkline and the per-kind sums for the donut, from the same reads as the sections around it.
+ * Weeks start on Sunday, as on the calendar; the partial weeks at either end are left out so the line doesn't dip.
+ */
+async function ChartsSection({ login, calendarLogin }: { login: string; calendarLogin: string }) {
+  const [calendar, { rows, period }] = await Promise.all([profileCalendar(calendarLogin), profileActivity(login)]);
+  const weeks: (WeekTotal & { days: number })[] = [];
+  for (const d of calendar?.days ?? []) {
+    const date = new Date(`${d.date}T00:00:00Z`);
+    date.setUTCDate(date.getUTCDate() - date.getUTCDay());
+    const week = date.toISOString().slice(0, 10);
+    if (weeks.at(-1)?.week !== week) weeks.push({ week, count: 0, days: 0 });
+    weeks.at(-1)!.count += d.count;
+    weeks.at(-1)!.days += 1;
+  }
+  const full = weeks.filter((w) => w.days === 7).map(({ week, count }) => ({ week, count }));
+  const mix = rows.length > 0
+    ? rows.reduce((m, r) => ({ commits: m.commits + r.commits, prs: m.prs + r.prs, issues: m.issues + r.issues, reviews: m.reviews + r.reviews }), { commits: 0, prs: 0, issues: 0, reviews: 0 })
+    : null;
+  if (full.length < 2 && !mix) return null;
+  return (
+    <section className="card profile-section" aria-labelledby="charts-title">
+      <h2 id="charts-title">Activity at a glance</h2>
+      <ProfileCharts weeks={full} mix={mix} mixPeriod={period === "all years" ? "All years, every repo" : "Recent activity, every repo"} />
+    </section>
   );
 }
 
