@@ -47,9 +47,9 @@ export function ExploreStart() {
           <line key={i} x1={CENTER.x} y1={CENTER.y} x2={n.x} y2={n.y} data-tone={n.tone} style={{ animationDelay: `${i * 90}ms` }} />
         ))}
         {NODES.map((n, i) => (
-          <g key={i} style={{ animationDelay: `${200 + i * 90}ms` }}>
-            <circle cx={n.x} cy={n.y} r={n.tone === "activity" ? 6 : 8} data-tone={n.tone} style={{ animationDelay: "inherit" }} />
-            <text x={n.x} y={n.y < CENTER.y ? n.y - 16 : n.y + 24} textAnchor="middle" className="explore-start-node-label" style={{ animationDelay: "inherit" }}>
+          <g key={i}>
+            <circle cx={n.x} cy={n.y} r={n.tone === "activity" ? 6 : 8} data-tone={n.tone} style={{ animationDelay: `${450 + i * 90}ms` }} />
+            <text x={n.x} y={n.y < CENTER.y ? n.y - 16 : n.y + 24} textAnchor="middle" className="explore-start-node-label" style={{ animationDelay: `${450 + i * 90}ms` }}>
               {n.label}
             </text>
           </g>

@@ -340,16 +340,22 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
 .explore-start-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .explore-start-art { width: 100%; max-width: 440px; height: auto; justify-self: center; overflow: visible; }
 .explore-start-art .explore-start-node-label { fill: var(--text-muted); font-family: var(--font-mono); font-size: 11px; animation: explore-start-in .4s var(--ease-standard) both; }
-.explore-start-art line { stroke: var(--success); stroke-width: 2; stroke-linecap: round; animation: explore-start-in .5s var(--ease-standard) both; }
+/* Each link grows out of the centre (180,140 in the sketch's viewBox), then its node pops in at the end. */
+.explore-start-art line {
+  stroke: var(--success); stroke-width: 2; stroke-linecap: round;
+  transform-box: view-box; transform-origin: 180px 140px; animation: explore-start-grow .6s var(--ease-standard) both;
+}
 .explore-start-art line[data-tone="bad"] { stroke: var(--danger); }
 .explore-start-art line[data-tone="activity"] { stroke: var(--text-muted); stroke-dasharray: 1 5; opacity: .7; }
-.explore-start-art circle { fill: var(--success); animation: explore-start-in .4s var(--ease-standard) both; }
+.explore-start-art circle { fill: var(--success); transform-box: fill-box; transform-origin: center; animation: explore-start-pop .35s var(--ease-standard) both; }
 .explore-start-art circle[data-tone="bad"] { fill: var(--danger); }
 .explore-start-art circle[data-tone="activity"] { fill: var(--surface); stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 2 2; }
 .explore-start-center { fill: var(--foreground); }
 .explore-start-center-label { fill: var(--background); font-family: var(--font-body); font-size: 14px; font-weight: 600; }
 @keyframes explore-start-in { from { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .explore-start-art line, .explore-start-art circle { animation: none; } }
+@keyframes explore-start-grow { from { transform: scale(0); } }
+@keyframes explore-start-pop { from { opacity: 0; transform: scale(0); } }
+@media (prefers-reduced-motion: reduce) { .explore-start-art line, .explore-start-art circle, .explore-start-art text { animation: none; } }
 @media (max-width: 720px) {
   .explore-start { grid-template-columns: minmax(0, 1fr); min-height: 0; }
   .explore-start-art { order: -1; max-width: 320px; }
