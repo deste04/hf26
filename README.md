@@ -4,6 +4,8 @@ Trust graph for open-source maintainers. It reads public [Vouch](https://github.
 
 Built for Hacktoberfest Hack Day, "Best Open-Source AI Project" challenge. **Slides:** [Vouch Explorer](https://claude.ai/artifact/7n4nuT3J1MYDY1XMUyDWPH)
 
+![Vouch Explorer on desktop](mockups/mock_pc.png)
+
 ## The idea
 
 AI-generated pull requests and issues are flooding maintainers. Many projects now answer with explicit trust: with Vouch, a repo keeps a plain-text `VOUCHED.td` file listing who is vouched for and who is denounced.
