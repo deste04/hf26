@@ -155,8 +155,9 @@ export default function TrustGraph({ center, edges, activity = [], vouchersPendi
     // Hover: the node and its links stay, the rest steps back, and the voucher shows even where labels are off.
     { selector: ".faded", style: { opacity: 0.12, "text-opacity": 0.12 } },
     { selector: "edge.hl", style: { opacity: 1, width: Math.max(2, t.edge + 1), label: "data(hover)", "z-index": 20 } },
+    // The centre keeps its own pill colours: this label style would paint it like the background.
     {
-      selector: "node.hl",
+      selector: "node.hl[isCenter = 0]",
       style: {
         "font-size": Math.max(13, t.font + 2),
         "font-weight": 600,

@@ -1,6 +1,7 @@
 // Explore's data: a project's VOUCHED.td or a person's entries, read live from GitHub (see ../vouch.ts).
 import { cleanQuery } from "../../lib/query";
 import { repoActivity } from "../github";
+import { rateLimited } from "../githubCore";
 import type { TrustEdge } from "../trust/types";
 import { attributeEdges, projectEdges, userListings } from "../vouch";
 
@@ -8,8 +9,8 @@ export type ExploreResult = {
   kind: "user" | "project";
   q: string;
   edges: TrustEdge[];
-  /** Why GitHub returned nothing, when it didn't: no VOUCHED.td, person search without a token, or an API error. */
-  issue: null | "no_vouch_file" | "needs_token" | "unavailable";
+  /** Why GitHub returned nothing, when it didn't: no VOUCHED.td, person search without a token, a rate limit, or an API error. */
+  issue: null | "no_vouch_file" | "needs_token" | "rate_limited" | "unavailable";
 };
 
 export async function exploreSearch(raw: string): Promise<ExploreResult> {
@@ -31,6 +32,7 @@ export async function exploreSearch(raw: string): Promise<ExploreResult> {
     if (u.status === "ok") edges = u.edges;
     else issue = u.status;
   }
+  if (issue === "unavailable" && rateLimited()) issue = "rate_limited";
   return { kind, q, edges, issue };
 }
 

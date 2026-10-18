@@ -6,17 +6,18 @@ import { Octokit } from "@octokit/rest";
 import { workAsyncStorage } from "next/dist/server/app-render/work-async-storage.external";
 
 /**
- * Per request: the signed-in person's token, and whether the server's own token failed (rate limit, revoked, none).
+ * Per request: the signed-in person's token, whether the server's own token failed (rate limit, revoked, none),
+ * and whether it hit a rate limit (after the person's, when someone is signed in).
  * "use cache" clears every AsyncLocalStorage before it runs, but restores Next's work store, so the request is
  * found through that store. The token stays out of the cache key: results are public and shared by everyone.
  */
-type Viewer = { token?: string; login?: string; serverFailed: boolean };
+type Viewer = { token?: string; login?: string; serverFailed: boolean; limited: boolean };
 const viewers = new WeakMap<object, Viewer>();
 function viewer(): Viewer | undefined {
   const store = workAsyncStorage.getStore();
   if (!store) return undefined;
   let v = viewers.get(store);
-  if (!v) viewers.set(store, (v = { serverFailed: false }));
+  if (!v) viewers.set(store, (v = { serverFailed: false, limited: false }));
   return v;
 }
 
@@ -32,10 +33,20 @@ export function serverTokenFailed(): boolean {
   return Boolean(v && !v.token && v.serverFailed);
 }
 
-/** Rate limits (primary and secondary) and bad credentials: the token, not the request, is the problem. */
-function isTokenProblem(err: unknown): boolean {
+/** True when a GitHub read in this request failed on the server's rate limit, the last token tried. */
+export function rateLimited(): boolean {
+  return Boolean(viewer()?.limited);
+}
+
+/** Rate limits, primary and secondary. */
+function isLimit(err: unknown): boolean {
   const { status, message } = err as { status?: number; message?: string };
-  return status === 401 || status === 429 || /rate limit/i.test(message ?? "");
+  return status === 429 || /rate limit/i.test(message ?? "");
+}
+
+/** Rate limits and bad credentials: the token, not the request, is the problem. */
+function isTokenProblem(err: unknown): boolean {
+  return (err as { status?: number }).status === 401 || isLimit(err);
 }
 
 let server: Octokit | undefined;
@@ -49,7 +60,7 @@ function serverClient(): Octokit {
   server.hook.error("request", (err) => {
     if (isTokenProblem(err)) {
       const v = viewer();
-      if (v) v.serverFailed = true;
+      if (v) Object.assign(v, { serverFailed: true, limited: v.limited || isLimit(err) });
     }
     throw err;
   });
@@ -62,6 +73,18 @@ function userClient(token: string): Octokit {
   let c = userClients.get(token);
   if (!c) {
     c = new Octokit({ auth: token, userAgent: "vouch-explorer" });
+    // Their limits are tighter than they look (code search: 10 a minute): when theirs runs out, or the token was
+    // revoked, the same read goes through the server's token instead of failing the page.
+    c.hook.wrap("request", async (request, options) => {
+      try {
+        return await request(options);
+      } catch (err) {
+        if (!isTokenProblem(err)) throw err;
+        const headers = { ...options.headers };
+        delete headers.authorization;
+        return serverClient().request({ ...options, headers });
+      }
+    });
     userClients.set(token, c);
     if (userClients.size > 500) userClients.delete(userClients.keys().next().value!);
   }

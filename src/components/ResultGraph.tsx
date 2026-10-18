@@ -106,6 +106,8 @@ export function ExploreResults({ q }: { q: string }) {
 function NoResult({ result }: { result: ExploreResult }) {
   const { q, issue } = result;
   const profile = <LinkButton href={`/u/${encodeURIComponent(q)}`}>Open profile</LinkButton>;
+  if (issue === "rate_limited")
+    return <ExploreEmpty scene="offline" title="GitHub's search limit is reached" line="It resets within a minute. Try again then." />;
   if (issue === "unavailable") return <ExploreEmpty scene="offline" title="GitHub isn't answering" line="Try again in a minute." />;
   // Without a token person search is off; that is a setup detail (logged on the server), so offer the profile instead.
   if (issue === "needs_token")
