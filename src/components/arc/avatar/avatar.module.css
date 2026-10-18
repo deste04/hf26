@@ -26,6 +26,16 @@
   transition: none;
 }
 
+/* While the photo downloads, a pulsing disc stands in for it; the photo paints over it once it arrives. */
+.avatar:has(img[data-loading])::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: color-mix(in oklab, var(--border-strong) 38%, var(--surface));
+  animation: avatar-pulse 1.8s var(--ease-in-out) infinite;
+}
+
 .fallback { animation: avatar-fallback-in var(--duration-standard) var(--ease-enter) both; }
 
 .sm { width: 28px; height: 28px; font-size: 10px; }
@@ -52,9 +62,11 @@
 .offline { background: var(--text-muted); }
 
 @keyframes avatar-fallback-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes avatar-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .52; } }
 
 @media (prefers-reduced-motion: reduce) {
   .avatar img { transition: none; }
   .avatar img[data-loading] { filter: none; }
   .fallback { animation: none; }
+  .avatar::before { animation: none; }
 }

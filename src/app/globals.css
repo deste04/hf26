@@ -161,7 +161,15 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
   .account-btn.is-signin { width: 38px; padding: 0; justify-content: center; }
   .account-btn.is-signin span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
-.account-btn.is-pending { display: inline-block; width: 44px; height: 44px; }
+.account-btn.is-pending { display: inline-grid; place-items: center; width: 44px; height: 44px; }
+/* Until the session is known, a pulsing disc the size of the avatar holds its place. */
+.account-btn.is-pending::before {
+  content: ""; width: 36px; height: 36px; border-radius: 50%;
+  background: color-mix(in oklab, var(--border-strong) 38%, var(--surface));
+  animation: account-pulse 1.8s var(--ease-in-out) infinite;
+}
+@keyframes account-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .52; } }
+@media (prefers-reduced-motion: reduce) { .account-btn.is-pending::before { animation: none; } }
 .account-btn.is-avatar {
   display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 2px solid transparent; border-radius: 50%;
   background: none; cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard);

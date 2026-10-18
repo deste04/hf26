@@ -30,7 +30,7 @@ export default function OpengraphImage() {
         <div style={{ marginTop: 48, fontSize: 44, lineHeight: 1.25, maxWidth: 940 }}>
           See who is vouched for or denounced across open-source projects, in one trust graph.
         </div>
-        <div style={{ marginTop: 32, fontSize: 30, color: "#087c54" }}>Public VOUCHED.td lists · AI explains, humans decide</div>
+        <div style={{ marginTop: 32, fontSize: 30, color: "#087c54" }}>Public VOUCHED.td lists. AI explains, humans decide</div>
       </div>
     ),
     size,

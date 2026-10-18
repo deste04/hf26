@@ -85,9 +85,9 @@ export function ExploreResults({ q }: { q: string }) {
               {result.kind === "user"
                 ? `Listed in ${plural(edges.length, "project", "projects")}`
                 : plural(edges.length, "listed user", "listed users")}
-              {vouched > 0 && <> · <span className="tone-success">{fmt(vouched)} vouched</span></>}
-              {denounced > 0 && <> · <span className="tone-danger">{fmt(denounced)} denounced</span></>}
-              {repos.length > 0 && <> · {plural(repos.length, "other repo", "other repos")} with activity</>}
+              {vouched > 0 && <>, <span className="tone-success">{fmt(vouched)} vouched</span></>}
+              {denounced > 0 && <>, <span className="tone-danger">{fmt(denounced)} denounced</span></>}
+              {repos.length > 0 && <>, {plural(repos.length, "other repo", "other repos")} with activity</>}
             </span>
           </div>
           {result.kind === "user" ? (

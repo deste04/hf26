@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: Params }, parent: R
     title: `@${login}`,
     description,
     alternates: { canonical: path },
-    openGraph: { title: `@${login} · Vouch Explorer`, description, url: path, type: "profile", images: (await parent).openGraph?.images },
+    openGraph: { title: `@${login} | Vouch Explorer`, description, url: path, type: "profile", images: (await parent).openGraph?.images },
   };
 }
 
