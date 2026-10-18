@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Outfit } from "next/font/google";
 import Link from "next/link";
 import Header from "@/components/Header";
+import { ScrollReset } from "@/components/ScrollReset";
 import Providers from "@/components/Providers";
 import { REPO_URL, SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import "@/components/arc/foundation.css";
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <div className="page-world" aria-hidden="true" />
         <Providers>
+          <ScrollReset />
           <Header />
           <main>{children}</main>
           <footer className="site-footer">
