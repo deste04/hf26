@@ -45,6 +45,8 @@ const fonts = () => {
   };
 };
 
+const isMac = () => typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
+
 /** Size tier from node count: small graphs stay compact, big ones get rings and more room. */
 function tier(n: number) {
   if (n <= 8) return { height: 340, maxZoom: 1.3, font: 12, pad: 8, ring: Infinity, spacing: 60, edge: 2 };
@@ -60,6 +62,8 @@ export default function TrustGraph({ center, edges, activity = [], vouchersPendi
   const [fullscreen, setFullscreen] = useState(false);
   // Cytoscape loads on demand; until it has drawn, a loader covers the empty canvas.
   const [drawn, setDrawn] = useState(false);
+  // Shown for a moment when a plain scroll passes over the graph: it scrolls the page, a modifier zooms.
+  const [zoomHint, setZoomHint] = useState(false);
   const router = useRouter();
   const nodeCount = 1 + new Set(edges.map((e) => (center.kind === "user" ? e.project : e.login))).size + activity.length;
   const t = tier(nodeCount);
@@ -148,6 +152,21 @@ export default function TrustGraph({ center, edges, activity = [], vouchersPendi
     // Contribution without a vouch list entry: present, but quieter than any trust edge.
     { selector: 'edge[status = "activity"]', style: { width: 1, opacity: 0.45, "line-color": c.unknown, "line-style": "dotted" as never } },
     { selector: 'node[status = "activity"]', style: { "border-color": c.border, "border-style": "dotted" as never } },
+    // Hover: the node and its links stay, the rest steps back, and the voucher shows even where labels are off.
+    { selector: ".faded", style: { opacity: 0.12, "text-opacity": 0.12 } },
+    { selector: "edge.hl", style: { opacity: 1, width: Math.max(2, t.edge + 1), label: "data(hover)", "z-index": 20 } },
+    {
+      selector: "node.hl",
+      style: {
+        "font-size": Math.max(13, t.font + 2),
+        "font-weight": 600,
+        color: c.fg,
+        "text-background-color": c.surface,
+        "text-background-opacity": 0.9,
+        "text-background-padding": "2px",
+        "z-index": 20,
+      },
+    },
   ];
 
   /** Zoom by a step around the middle of the view, within the graph's zoom limits. */
@@ -168,6 +187,27 @@ export default function TrustGraph({ center, edges, activity = [], vouchersPendi
       cy.center();
     }
   };
+
+  // A plain scroll over the graph scrolls the page; ⌘/Ctrl + scroll (and trackpad pinch, which sends ctrlKey)
+  // zooms. Caught on the wrapper before Cytoscape's own handler, which would swallow the scroll. Fullscreen has
+  // no page to scroll, so there every scroll zooms.
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey || document.fullscreenElement === wrap) return;
+      e.stopPropagation();
+      setZoomHint(true);
+      clearTimeout(timer);
+      timer = setTimeout(() => setZoomHint(false), 1200);
+    };
+    wrap.addEventListener("wheel", onWheel, { capture: true, passive: true });
+    return () => {
+      wrap.removeEventListener("wheel", onWheel, { capture: true });
+      clearTimeout(timer);
+    };
+  }, []);
 
   // Resize and re-fit when entering/leaving fullscreen (Esc exits natively).
   useEffect(() => {
@@ -199,12 +239,14 @@ export default function TrustGraph({ center, edges, activity = [], vouchersPendi
         const other = center.kind === "user" ? { id: `project:${e.project}`, label: e.project, kind: "project" } : { id: `user:${e.login}`, label: e.login, kind: "user" };
         if (!nodes.has(other.id)) nodes.set(other.id, { ...other, status: e.status });
         const [source, target] = center.kind === "user" ? [other.id, centerId] : [centerId, other.id];
+        const voucherLabel = e.voucher ? `by @${e.voucher}` : vouchersPending ? "" : "unknown";
         els.push({
           data: {
             id: `e${i}`,
             source,
             target,
-            label: edges.length > 30 ? "" : e.voucher ? `by @${e.voucher}` : vouchersPending ? "" : "unknown",
+            label: edges.length > 30 ? "" : voucherLabel,
+            hover: voucherLabel,
             // Denounced stays red even with an unknown voucher (dashed); unknown vouches are dashed grey.
             hasVoucher: e.voucher ? 1 : 0,
             style: e.voucher || vouchersPending ? "solid" : "dashed",
@@ -216,7 +258,7 @@ export default function TrustGraph({ center, edges, activity = [], vouchersPendi
         const id = `project:${repo}`;
         if (nodes.has(id)) continue;
         nodes.set(id, { id, label: repo, kind: "project", status: "activity" });
-        els.push({ data: { id: `a:${repo}`, source: id, target: centerId, label: "", hasVoucher: 0, style: "dotted", status: "activity" } });
+        els.push({ data: { id: `a:${repo}`, source: id, target: centerId, label: "", hover: "activity only", hasVoucher: 0, style: "dotted", status: "activity" } });
       }
       // Large graphs: spread leaves over several concentric rings instead of one giant circle.
       // Denounced nodes go on their own inner ring so they are never lost in a big graph.
@@ -249,11 +291,18 @@ export default function TrustGraph({ center, edges, activity = [], vouchersPendi
       themeObserver = new MutationObserver(() => cy?.style(styleFor(readPalette())));
       themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "data-accent"] });
       // Every node but the centre opens its own map: show it with the pointer.
-      cy.on("mouseover", "node[isCenter = 0]", () => {
-        if (ref.current) ref.current.style.cursor = "pointer";
+      cy.on("mouseover", "node", (evt) => {
+        const node = evt.target;
+        if (ref.current && !node.data("isCenter")) ref.current.style.cursor = "pointer";
+        const near = node.closedNeighborhood();
+        cy!.batch(() => {
+          cy!.elements().not(near).addClass("faded");
+          near.addClass("hl");
+        });
       });
       cy.on("mouseout", "node", () => {
         if (ref.current) ref.current.style.cursor = "";
+        cy!.batch(() => cy!.elements().removeClass("faded hl"));
       });
       cy.on("tap", "node", (evt) => {
         const d = evt.target.data();
@@ -316,6 +365,9 @@ export default function TrustGraph({ center, edges, activity = [], vouchersPendi
           <MousePointerClick size={14} aria-hidden="true" />
           Click a {center.kind === "user" ? "project" : "person"} to open its trust map
         </span>
+      </div>
+      <div className={`graph-zoom-hint${zoomHint ? " is-visible" : ""}`} aria-hidden="true">
+        Hold {isMac() ? "⌘" : "Ctrl"} and scroll to zoom
       </div>
       {!drawn && <GraphLoader label="Drawing the graph" bare />}
     </div>

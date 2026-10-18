@@ -1,6 +1,8 @@
+import { Star } from "lucide-react";
 import { Suspense } from "react";
 import { ExploreEmpty } from "@/components/ExploreEmpty";
 import { GraphLoader } from "@/components/GraphLoader";
+import { LinkButton } from "@/components/LinkButton";
 import { SearchBar } from "@/components/SearchBar";
 import { ExploreResults } from "@/components/ResultGraph";
 import { cleanQuery } from "@/lib/query";
@@ -12,12 +14,17 @@ export default function ExplorePage({ searchParams }: { searchParams: Search }) 
   return (
     <div className="container explore">
       <section className="explore-hero" aria-labelledby="explore-title">
-        <div className="explore-intro">
-          <h1 id="explore-title">Check who's trusted before AI slop lands in your PRs</h1>
-          <p>
-            Vouch Explorer joins every project's <span className="mono">VOUCHED.td</span> list into one graph. Search a person
-            to see who vouches for them, or a project to see who it trusts.
-          </p>
+        <div className="explore-lede">
+          <div className="explore-intro">
+            <h1 id="explore-title">Check who's trusted before AI slop lands in your PRs</h1>
+            <p>
+              Vouch Explorer joins every project's <span className="mono">VOUCHED.td</span> list into one graph. Search a
+              person to see who vouches for them, or a project to see who it trusts.
+            </p>
+          </div>
+          <LinkButton href="https://github.com/deste04/hf26" external icon={<Star size={16} className="star-icon" />} className="is-primary">
+            Star us on GitHub
+          </LinkButton>
         </div>
         <Suspense fallback={<SearchBar defaultValue="" />}>
           <HeroSearch searchParams={searchParams} />
@@ -30,7 +37,7 @@ export default function ExplorePage({ searchParams }: { searchParams: Search }) 
             <Results searchParams={searchParams} />
           </Suspense>
         </section>
-        <aside className="stack" aria-label="Recent vouches">
+        <aside className="stack explore-side" aria-label="Recent vouches">
           <ExploreEmpty scene="inbox" title="Recent vouches" line="Nothing yet. New VOUCHED.td entries will show up here." />
         </aside>
       </div>

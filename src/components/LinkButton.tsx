@@ -15,8 +15,9 @@ export function GithubMark({ size = 16 }: { size?: number }) {
  * A link styled as a secondary button, with a trailing arrow that slides out and back in on hover or focus:
  * up-right for links that leave the site, right for links within it.
  */
-export function LinkButton({ href, external = false, icon, children }: { href: string; external?: boolean; icon?: ReactNode; children: ReactNode }) {
+export function LinkButton({ href, external = false, icon, className, children }: { href: string; external?: boolean; icon?: ReactNode; className?: string; children: ReactNode }) {
   const Arrow = external ? ArrowUpRight : ArrowRight;
+  const cls = className ? `link-btn ${className}` : "link-btn";
   const body = (
     <>
       {icon}
@@ -28,12 +29,12 @@ export function LinkButton({ href, external = false, icon, children }: { href: s
     </>
   );
   return external ? (
-    <a className="link-btn" href={href} target="_blank" rel="noreferrer">
+    <a className={cls} href={href} target="_blank" rel="noreferrer">
       {body}
       <span className="sr-only"> (opens in a new tab)</span>
     </a>
   ) : (
-    <Link className="link-btn" href={href}>
+    <Link className={cls} href={href}>
       {body}
     </Link>
   );

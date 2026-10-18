@@ -67,6 +67,11 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
 .link-btn:hover { background: var(--surface-muted); border-color: var(--border-strong); }
 .link-btn:active { transform: scale(.98); }
 .link-btn svg { flex: none; }
+/* Solid, for the one link the page asks the visitor to follow. */
+.link-btn.is-primary { min-height: 48px; padding: 0 var(--space-5); border-color: var(--foreground); background: var(--foreground); color: var(--background); font-weight: 600; box-shadow: var(--shadow-resting); }
+.link-btn.is-primary:hover { background: var(--foreground); border-color: var(--foreground); opacity: .91; }
+.link-btn.is-primary .link-btn-arrow, .link-btn.is-primary:hover .link-btn-arrow { color: var(--background); }
+.link-btn.is-primary .star-icon { color: #f5b301; fill: #f5b301; }
 /* Two stacked arrows: on hover the first leaves along its direction while the second slides in behind it. */
 .link-btn-arrow { position: relative; display: inline-grid; width: 16px; height: 16px; overflow: hidden; margin-right: -2px; color: var(--text-secondary); }
 .link-btn-arrow svg { grid-area: 1 / 1; transition: transform 320ms var(--ease-standard); }
@@ -172,6 +177,12 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
 .explore-intro { display: grid; gap: var(--space-3); }
 .explore-intro h1 { margin: 0; font-size: clamp(var(--text-2xl), 4vw, 2.75rem); line-height: 1.05; }
 .explore-intro p { margin: 0; color: var(--text-secondary); font-size: var(--text-base); }
+/* Headline and intro on the left, the star ask on the right, centred against both; wraps under them on narrow screens. */
+.explore-lede { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.explore-lede .explore-intro { flex: 1 1 420px; }
+/* Recent vouches has no data source yet: hidden, and the graph takes the full width. */
+.explore-side { display: none; }
+.explore .grid-2 { grid-template-columns: minmax(0, 1fr); }
 
 /* One control: icon, field, what was recognized, and both actions share a single rounded bar. */
 .search-bar {
@@ -282,6 +293,12 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
 .graph-wrap:not(.is-fullscreen) .graph-tools { position: absolute; top: var(--space-2); right: var(--space-2); z-index: 1; margin: 0; }
 .graph-wrap.is-fullscreen { background: var(--surface); padding: var(--space-4); display: flex; flex-direction: column; }
 .graph-wrap.is-fullscreen .graph { flex: 1; height: auto; max-height: none; }
+.graph-zoom-hint {
+  position: absolute; top: 50%; left: 50%; z-index: 1; translate: -50% -50%; pointer-events: none;
+  padding: var(--space-2) var(--space-4); border-radius: var(--radius-pill); background: var(--foreground); color: var(--background);
+  font-size: var(--text-sm); font-weight: 500; opacity: 0; transition: opacity var(--duration-fast) var(--ease-standard);
+}
+.graph-zoom-hint.is-visible { opacity: .92; }
 .graph-loader { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-3); min-height: 340px; }
 .graph-loader.is-bare { position: absolute; inset: 0; z-index: 2; min-height: 0; background: var(--surface); }
 .graph-loader-spin {
