@@ -182,11 +182,11 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
 }
 .search-bar:hover { border-color: color-mix(in oklab, var(--foreground) 30%, var(--border-strong)); }
 .search-bar[data-focused] { border-color: var(--foreground); box-shadow: 0 0 0 4px color-mix(in oklab, var(--foreground) 10%, transparent); }
-/* Nudged down a pixel: centred on the box it sits above the placeholder's lowercase letters, which carry the eye. */
-.search-bar-icon { flex: none; color: var(--text-muted); transform: translateY(1px); transition: color var(--duration-fast) var(--ease-standard); }
+.search-bar-icon { flex: none; color: var(--text-muted); transition: color var(--duration-fast) var(--ease-standard); }
 .search-bar[data-focused] .search-bar-icon { color: var(--foreground); }
 .search-bar-input {
-  flex: 1; min-width: 0; height: 44px; padding: 0; border: 0; outline: 0; background: transparent;
+  /* Outfit sits low in its line box; the bottom padding lifts the text to the bar's centre, level with the icon. */
+  flex: 1; min-width: 0; height: 44px; padding: 0 0 3px; border: 0; outline: 0; background: transparent;
   color: var(--foreground); font: inherit; font-size: var(--text-base);
 }
 .search-bar-input:focus-visible { outline: 0; }
