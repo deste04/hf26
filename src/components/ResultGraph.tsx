@@ -1,8 +1,8 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Skeleton } from "@/components/arc/skeleton/skeleton";
 import { ExploreEmpty } from "@/components/ExploreEmpty";
+import { GraphLoader } from "@/components/GraphLoader";
 import { GithubMark, LinkButton } from "@/components/LinkButton";
 import TrustGraph from "@/components/TrustGraph";
 import { TrustTable } from "@/components/TrustTable";
@@ -32,8 +32,8 @@ function usePageLoaded() {
 
 /**
  * Explore results, fetched from the browser only after the page has fully loaded, so the search never holds it.
- * The list of entries comes first and draws the graph; vouchers (slow: one blame per list) and the person's
- * activity-only repos are fetched alongside and swapped in when they arrive.
+ * The list of entries comes first; vouchers (slow: one blame per list) and the person's activity-only repos are
+ * fetched alongside. A loader stays up until all three are in, so the graph is drawn once, complete.
  */
 export function ExploreResults({ q }: { q: string }) {
   const loaded = usePageLoaded();
@@ -44,10 +44,11 @@ export function ExploreResults({ q }: { q: string }) {
   });
   const result = list.data;
   const person = result?.kind === "user" && !result.issue;
+  const needsVouchers = person && (result?.edges.length ?? 0) > 0;
   const vouchers = useQuery({
     queryKey: ["explore", q, "vouchers"],
     queryFn: ({ signal }) => getPart<TrustEdge[]>(q, "vouchers", signal),
-    enabled: person && (result?.edges.length ?? 0) > 0,
+    enabled: needsVouchers,
   });
   const activity = useQuery({
     queryKey: ["explore", q, "activity"],
@@ -56,14 +57,13 @@ export function ExploreResults({ q }: { q: string }) {
   });
 
   if (list.isError) return <ExploreEmpty scene="offline" title="GitHub isn't answering" line="Try again in a minute." />;
-  // No vouch entries: the graph has only activity to show, so this one case waits for it.
-  if (!result || (result.edges.length === 0 && person && activity.isPending))
-    return <div className="card"><Skeleton label="Reading VOUCHED.td from GitHub" lines={6} /></div>;
+  if (!result) return <GraphLoader label="Reading VOUCHED.td from GitHub" />;
+  if (needsVouchers && vouchers.isPending) return <GraphLoader label="Finding who vouched" />;
+  if (person && activity.isPending) return <GraphLoader label="Reading GitHub activity" />;
   const repos = activity.data ?? [];
   if (result.edges.length === 0 && repos.length === 0) return <NoResult result={result} />;
 
   const edges = vouchers.data ?? result.edges;
-  const pending = vouchers.isLoading;
   const title = result.kind === "user" ? `@${result.q}` : result.q;
   const vouched = edges.filter((e) => e.status === "vouched").length;
   const denounced = edges.length - vouched;
@@ -91,9 +91,9 @@ export function ExploreResults({ q }: { q: string }) {
             <LinkButton href={`https://github.com/${result.q}`} external icon={<GithubMark />}>View on GitHub</LinkButton>
           )}
         </div>
-        <TrustGraph center={center} edges={edges} activity={repos} vouchersPending={pending} />
+        <TrustGraph center={center} edges={edges} activity={repos} />
       </div>
-      {edges.length > 0 && <TrustTable kind={center.kind} edges={edges} vouchersPending={pending} />}
+      {edges.length > 0 && <TrustTable kind={center.kind} edges={edges} />}
     </>
   );
 }

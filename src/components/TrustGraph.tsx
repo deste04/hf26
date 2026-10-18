@@ -2,6 +2,7 @@
 import { LocateFixed, Maximize, Minimize, Minus, MousePointerClick, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { GraphLoader } from "@/components/GraphLoader";
 import type { TrustEdge } from "@/server/trust/types";
 
 /** `activity`: person view only, repos the person contributed to without being in their VOUCHED.td. */
@@ -57,6 +58,8 @@ export default function TrustGraph({ center, edges, activity = [], vouchersPendi
   const wrapRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<import("cytoscape").Core | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
+  // Cytoscape loads on demand; until it has drawn, a loader covers the empty canvas.
+  const [drawn, setDrawn] = useState(false);
   const router = useRouter();
   const nodeCount = 1 + new Set(edges.map((e) => (center.kind === "user" ? e.project : e.login))).size + activity.length;
   const t = tier(nodeCount);
@@ -241,6 +244,7 @@ export default function TrustGraph({ center, edges, activity = [], vouchersPendi
       });
       cyRef.current = cy;
       fit();
+      setDrawn(true);
       // Re-color when the Arc theme switch flips data-theme on <html>.
       themeObserver = new MutationObserver(() => cy?.style(styleFor(readPalette())));
       themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "data-accent"] });
@@ -313,6 +317,7 @@ export default function TrustGraph({ center, edges, activity = [], vouchersPendi
           Click a {center.kind === "user" ? "project" : "person"} to open its trust map
         </span>
       </div>
+      {!drawn && <GraphLoader label="Drawing the graph" bare />}
     </div>
   );
 }

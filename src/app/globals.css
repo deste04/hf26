@@ -8,6 +8,9 @@
  *   tables:   .table (wrap in .table-wrap for horizontal scroll on phones)
  */
 :root {
+  /* Accent glow from the top-left corner. Body and the sticky header both paint it from their own top edge,
+     so at the top of the page it runs unbroken behind the header. */
+  --page-glow: radial-gradient(120% 70vh at 0% 0%, color-mix(in oklab, var(--accent) 9%, transparent), transparent 60%) no-repeat;
   /* Outfit for headings and text (overrides Arc's Geist/Inter); handles and repo names stay in Geist Mono. */
   --font-display: var(--font-outfit), sans-serif;
   --font-body: var(--font-outfit), sans-serif;
@@ -18,9 +21,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
-  background:
-    radial-gradient(120% 70vh at 0% 0%, color-mix(in oklab, var(--accent) 9%, transparent), transparent 60%) no-repeat,
-    var(--background);
+  background: var(--page-glow), var(--background);
   color: var(--foreground);
   font-family: var(--font-body);
   font-size: var(--text-sm);
@@ -93,8 +94,8 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
 
 /* Header */
 .site-header {
-  position: sticky; top: 0; z-index: 20; background: color-mix(in oklab, var(--background) 86%, transparent);
-  backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-subtle);
+  position: sticky; top: 0; z-index: 20; background: var(--page-glow), color-mix(in oklab, var(--background) 86%, transparent);
+  backdrop-filter: blur(12px);
 }
 .site-header-inner {
   max-width: var(--page-max); margin: 0 auto; padding: var(--space-3) var(--space-6);
@@ -112,11 +113,10 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
 .nav a:hover { color: var(--foreground); background: var(--surface-muted); }
 .nav a[aria-current="page"] { color: var(--foreground); background: var(--surface-muted); }
 .header-tools { display: flex; align-items: center; gap: var(--space-2); }
-/* Narrow screens: brand and tools share the first row, the nav takes its own row and scrolls instead of wrapping. */
+/* Narrow screens: brand and tools only, the nav is hidden. */
 @media (max-width: 720px) {
-  .site-header-inner { justify-content: space-between; row-gap: var(--space-2); }
-  .nav { order: 3; flex: 1 0 100%; flex-wrap: nowrap; overflow-x: auto; margin: 0 calc(var(--space-3) * -1); padding: 0 var(--space-3); scrollbar-width: none; }
-  .nav a { white-space: nowrap; }
+  .site-header-inner { justify-content: space-between; }
+  .nav { display: none; }
 }
 
 /* Hero (profile lookup and other landing pages) */
@@ -180,7 +180,9 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
 /* Buttons follow the bar's curve: pills inside the pill, and on phones the bar's radius minus its padding. */
 .search-bar .search-bar-actions > * { border-radius: var(--radius-pill); }
 @media (max-width: 640px) {
-  .search-bar { flex-wrap: wrap; border-radius: var(--radius-panel); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); }
+  /* Even padding on all sides so the button row is centred; the icon gets the extra inset instead. */
+  .search-bar { flex-wrap: wrap; border-radius: var(--radius-panel); padding: var(--space-2); }
+  .search-bar-icon { margin-left: var(--space-2); }
   .search-bar-input { flex: 1 1 0; }
   .search-bar-kbd { display: none; }
   .search-bar-actions { flex-basis: 100%; margin-left: 0; }
@@ -242,6 +244,14 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
 .graph-wrap:not(.is-fullscreen) .graph-tools { position: absolute; top: var(--space-2); right: var(--space-2); z-index: 1; margin: 0; }
 .graph-wrap.is-fullscreen { background: var(--surface); padding: var(--space-4); display: flex; flex-direction: column; }
 .graph-wrap.is-fullscreen .graph { flex: 1; height: auto; max-height: none; }
+.graph-loader { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-3); min-height: 340px; }
+.graph-loader.is-bare { position: absolute; inset: 0; z-index: 2; min-height: 0; background: var(--surface); }
+.graph-loader-spin {
+  width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border);
+  border-top-color: var(--accent); animation: graph-spin .8s linear infinite;
+}
+@keyframes graph-spin { to { transform: rotate(1turn); } }
+@media (prefers-reduced-motion: reduce) { .graph-loader-spin { animation-duration: 2.4s; } }
 .legend { display: flex; flex-wrap: wrap; gap: var(--space-5); font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-3); }
 .legend span { display: inline-flex; align-items: center; gap: var(--space-2); }
 .legend i { display: inline-block; width: 24px; height: 0; border-top: 2px solid; }

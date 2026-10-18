@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { Skeleton } from "@/components/arc/skeleton/skeleton";
 import { ExploreEmpty } from "@/components/ExploreEmpty";
+import { GraphLoader } from "@/components/GraphLoader";
 import { SearchBar } from "@/components/SearchBar";
 import { ExploreResults } from "@/components/ResultGraph";
 import { cleanQuery } from "@/lib/query";
@@ -15,9 +15,8 @@ export default function ExplorePage({ searchParams }: { searchParams: Search }) 
         <div className="explore-intro">
           <h1 id="explore-title">Check who's trusted before AI slop lands in your PRs</h1>
           <p>
-            Projects answer with <span className="mono">VOUCHED.td</span> lists, but every list is an island: someone vouched in
-            five repos starts from zero in the sixth. Vouch Explorer joins them into one graph. Search a person to see who vouches
-            for them, or a project to see who it trusts.
+            One graph of every project's <span className="mono">VOUCHED.td</span> list. Search a person to see who vouches for
+            them, or a project to see who it trusts.
           </p>
         </div>
         <Suspense fallback={<SearchBar defaultValue="" />}>
@@ -27,7 +26,7 @@ export default function ExplorePage({ searchParams }: { searchParams: Search }) 
 
       <div className="grid-2">
         <section className="stack" aria-label="Trust graph">
-          <Suspense fallback={<div className="card"><Skeleton label="Reading VOUCHED.td from GitHub" lines={6} /></div>}>
+          <Suspense fallback={<GraphLoader label="Reading VOUCHED.td from GitHub" />}>
             <Results searchParams={searchParams} />
           </Suspense>
         </section>

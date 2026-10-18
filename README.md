@@ -79,8 +79,6 @@ npm test                # parser and AI grounding tests
 - **Alessandro La Conca** ([@Calonca](https://github.com/Calonca))
 - **Fabian** ([@fabianhogger](https://github.com/fabianhogger))
 
-Much of the code was written with Claude Code (Claude Opus 5.5) under the team's direction. The team chose the design and scope, reviewed the code, and tested it.
-
 Vouch and the `VOUCHED.td` format are by [Mitchell Hashimoto](https://github.com/mitchellh/vouch); this project only reads them.
 
 ## License
