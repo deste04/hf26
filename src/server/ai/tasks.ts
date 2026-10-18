@@ -17,7 +17,7 @@ export const PROMPT_VERSIONS = {
 export const RULES =
   "Use only the data provided. If evidence is missing, say so. Do not rate or score the person. Do not recommend vouching or denouncing.";
 
-export type AiError = { code: "model_unavailable" | "invalid_output" | "not_found" | "cancelled"; message: string };
+export type AiError = { code: "model_unavailable" | "invalid_output" | "not_found" | "cancelled" | "signed_out"; message: string };
 export type AiResult<T> =
   | { ok: true; data: T; cached: boolean; created_at: string; model: string }
   | { ok: false; error: AiError };

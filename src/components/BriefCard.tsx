@@ -1,6 +1,6 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CircleDashed, ListChecks, RotateCw } from "lucide-react";
+import { CircleDashed, ListChecks, Lock, RotateCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { Alert } from "@/components/arc/alert/alert";
@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/arc/skeleton/skeleton";
 import { TextShimmer } from "@/components/arc/text-shimmer/text-shimmer";
 import type { AiResult, Brief } from "@/server/ai/tasks";
 import { EvidenceList } from "./EvidenceList";
+import { GithubMark } from "./LinkButton";
 
 /** Aborting `signal` (e.g. leaving the profile) stops generation on the server. */
 async function fetchBrief(login: string, force: boolean, signal?: AbortSignal): Promise<AiResult<Brief>> {
@@ -89,7 +90,9 @@ export function BriefCard({ login }: { login: string }) {
                 ? "Not found"
                 : res.error.code === "cancelled"
                   ? "Cancelled"
-                  : "Invalid model output"
+                  : res.error.code === "signed_out"
+                    ? "Sign in required"
+                    : "Invalid model output"
           }
         >
           {res.error.message}
@@ -141,6 +144,28 @@ export function BriefCard({ login }: { login: string }) {
           </div>
         </>
       )}
+    </section>
+  );
+}
+
+/** Signed out: the card's place on the profile, saying the brief needs a GitHub sign-in and linking to it. */
+export function BriefSignIn({ next }: { next: string }) {
+  return (
+    <section className="card profile-section brief-card brief-locked" aria-labelledby="brief-title">
+      <div className="brief-head">
+        <h2 id="brief-title" className="brief-title">
+          <span className="brief-ai">AI</span> brief
+        </h2>
+      </div>
+      <p className="brief-locked-text">
+        <Lock size={16} aria-hidden="true" />
+        <span>Sign in with GitHub to read the AI brief of this person&apos;s public activity.</span>
+      </p>
+      {/* A plain link: a prefetched /login would be stale once they sign in (same as the header's Sign in). */}
+      <a className="link-btn brief-signin" href={`/login?next=${encodeURIComponent(next)}`}>
+        <GithubMark />
+        <span>Sign in to see the brief</span>
+      </a>
     </section>
   );
 }

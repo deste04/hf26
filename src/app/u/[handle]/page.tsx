@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { Avatar } from "@/components/arc/avatar/avatar";
 import { Badge } from "@/components/arc/badge/badge";
 import { Skeleton } from "@/components/arc/skeleton/skeleton";
-import { BriefCard } from "@/components/BriefCard";
+import { BriefCard, BriefSignIn } from "@/components/BriefCard";
 import { ContributionHeatmap } from "@/components/ContributionHeatmap";
 import { GithubMark, LinkButton } from "@/components/LinkButton";
 import { ProfileCharts, type WeekTotal } from "@/components/ProfileCharts";
@@ -42,7 +42,7 @@ async function Profile({ params }: { params: Params }) {
   await connection();
   const { handle } = await params;
   // GitHub is read with the signed-in person's token for the whole render, the sections below included.
-  await readAsViewer();
+  const viewer = await readAsViewer();
   const login = cleanQuery(decodeURIComponent(handle));
   const path = `/u/${encodeURIComponent(login)}`;
   const { user, error } = await profileUser(login);
@@ -68,7 +68,7 @@ async function Profile({ params }: { params: Params }) {
       </aside>
 
       <div className="profile-main">
-        <BriefCard login={shown} />
+        {viewer ? <BriefCard login={shown} /> : <BriefSignIn next={path} />}
         <Suspense fallback={<SectionSkeleton title="GitHub activity" label="Loading the contribution calendar" />}>
           <CalendarSection login={shown} years={accountYears(user)} />
         </Suspense>

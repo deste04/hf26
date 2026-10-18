@@ -52,6 +52,9 @@
 .regen-btn[data-busy] .regen-icon { animation: regen-spin 900ms linear infinite; }
 @keyframes regen-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .regen-btn .regen-icon { transition: none; animation: none !important; } }
+.brief-locked-text { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2); align-items: start; margin: 0; color: var(--text-secondary); line-height: 1.5; max-width: 60ch; }
+.brief-locked-text svg { margin-top: 3px; color: var(--text-muted); }
+.brief-signin { align-self: flex-start; }
 .brief-lead { display: grid; gap: var(--space-3); }
 .brief-summary { margin: 0; font-size: var(--text-base); line-height: 1.6; max-width: 72ch; }
 /* Evidence and what the data lacks: side by side when the card is wide, below a divider from the summary. */

@@ -3,11 +3,15 @@
 import { revalidateTag } from "next/cache";
 import { contributionBrief } from "@/server/ai/tasks";
 import { personTag } from "@/server/github";
+import { readAsViewer } from "@/server/session";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const login = url.searchParams.get("login");
   if (!login) return Response.json({ ok: false, error: { code: "not_found", message: "Missing login." } }, { status: 400 });
+  // The brief is for signed-in people only; the model runs on their behalf, with their GitHub token.
+  if (!(await readAsViewer()))
+    return Response.json({ ok: false, error: { code: "signed_out", message: "Sign in with GitHub to read the AI brief." } }, { status: 401 });
   const force = url.searchParams.get("force") === "1";
   // Regenerate re-reads the person's GitHub activity too: expire: 0 makes the next read a real fetch, not stale data,
   // so the new brief and the page refreshed after it both see the latest contributions and vouch lists.
