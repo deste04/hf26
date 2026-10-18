@@ -57,9 +57,35 @@ export default function McpPage() {
       <h3>Claude</h3>
       <p>
         On claude.ai or the desktop app, open <strong>Settings → Connectors</strong>, choose <strong>Add custom
-        connector</strong>, and paste the address above. In Claude Code:
+        connector</strong>, and paste the address above.
       </p>
-      <CodeBlock code={`claude mcp add --transport http vouch-explorer ${MCP_URL}`} filename="Terminal" language="bash" />
+
+      <h3>Claude Code</h3>
+      <p>Run this in your terminal, outside a Claude Code session:</p>
+      <CodeBlock code={`claude mcp add --transport http --scope user vouch-explorer ${MCP_URL}`} filename="Terminal" language="bash" />
+      <ul>
+        <li>
+          <span className="mono">--scope user</span> makes it available in every project.
+        </li>
+        <li>
+          <span className="mono">--scope project</span> adds it to this project only, in a{" "}
+          <span className="mono">.mcp.json</span> file you can commit to share it with your team.
+        </li>
+      </ul>
+      <p>
+        Check that it&apos;s connected with <span className="mono">claude mcp list</span>, or type{" "}
+        <span className="mono">/mcp</span> in a new Claude Code session to see its status and tools. Then ask as you
+        normally would:
+      </p>
+      <ul>
+        <li>&ldquo;Has anyone denounced @someone? Who, and with what note?&rdquo;</li>
+        <li>&ldquo;Who did ghostty-org/ghostty denounce this year?&rdquo;</li>
+        <li>&ldquo;Where does @pluiedev contribute, and which of those projects vouched for them?&rdquo;</li>
+      </ul>
+      <p>
+        Claude asks for permission the first time it calls a tool. To remove it:{" "}
+        <span className="mono">claude mcp remove vouch-explorer</span>.
+      </p>
 
       <h3>ChatGPT</h3>
       <p>
