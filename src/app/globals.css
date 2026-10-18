@@ -398,6 +398,24 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
 .legal p { margin: 0 0 var(--space-3); }
 .legal ul { margin: 0 0 var(--space-3); padding-left: var(--space-5); }
 .legal li { margin-bottom: var(--space-2); }
+/* Section bar (SectionScrollspy.tsx) on the text pages: fixed bottom right, only where it clears the text column. */
+.scrollspy {
+  position: fixed; right: var(--space-5); bottom: var(--space-5); z-index: 40; display: none; flex-direction: column; gap: 4px;
+  width: 240px; padding: 4px; overflow: hidden; border: 1px solid var(--border); border-radius: 20px;
+  background: var(--surface-muted); box-shadow: var(--shadow-floating);
+}
+@media (min-width: 1280px) { .scrollspy { display: flex; } }
+.scrollspy-title {
+  padding: 10px 12px; border-radius: 14px; background: var(--background); color: var(--foreground);
+  font-size: var(--text-sm); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.scrollspy-track { padding: 0 12px; border-radius: 14px; background: var(--surface); cursor: grab; touch-action: none; user-select: none; }
+.scrollspy-track:active { cursor: grabbing; }
+.scrollspy-ticks { position: relative; display: flex; align-items: center; justify-content: space-between; height: 40px; }
+.scrollspy-tick { width: 1px; height: 15px; background: var(--foreground); }
+.scrollspy-thumb { position: absolute; left: 0; top: 8px; width: 6px; height: 24px; border-radius: var(--radius-pill); background: var(--accent); will-change: transform; }
+.scrollspy-thumb.is-hover { opacity: .3; }
+
 /* MCP page: subheadings between the code blocks. */
 .legal h3 { font-size: var(--text-base); margin: var(--space-5) 0 var(--space-2); }
 
