@@ -178,7 +178,8 @@ async function reposMentioning(login: string): Promise<Hit[]> {
       if (page === 1) throw err;
       break; // keep what the first page found
     }
-    for (const i of items) if (PATHS.includes(i.path)) hits.set(i.repository.full_name.toLowerCase(), { repo: i.repository.full_name, path: i.path });
+    // Private hits stay out: this result is cached for everyone.
+    for (const i of items) if (PATHS.includes(i.path) && !i.repository.private) hits.set(i.repository.full_name.toLowerCase(), { repo: i.repository.full_name, path: i.path });
     if (items.length < 100) break;
   }
   return [...hits.values()];
@@ -194,10 +195,10 @@ async function reposActiveIn(login: string): Promise<string[]> {
   cacheLife("hours");
   cacheTag(personTag(login));
   const [events, owned] = await Promise.allSettled([
-    withRetry(() => octokit().activity.listPublicEventsForUser({ username: login, per_page: 100 }), 1),
+    withRetry(() => octokit(login).activity.listPublicEventsForUser({ username: login, per_page: 100 }), 1),
     withRetry(() => octokit().repos.listForUser({ username: login, sort: "pushed", per_page: MAX_ACTIVE }), 1),
   ]);
-  const fromEvents = events.status === "fulfilled" ? [...new Set(events.value.data.map((e) => e.repo.name))].slice(0, MAX_ACTIVE) : [];
+  const fromEvents = events.status === "fulfilled" ? [...new Set(events.value.data.filter((e) => e.public).map((e) => e.repo.name))].slice(0, MAX_ACTIVE) : [];
   const fromOwned = owned.status === "fulfilled" ? owned.value.data.map((r) => r.full_name) : [];
   return [...new Set([...fromEvents, ...fromOwned])];
 }

@@ -1,7 +1,8 @@
 // GitHub auth, pacing and retry, shared by the cached readers in ./github.ts and ./vouch.ts.
-// Token order: the signed-in person's (from the session), else the server's (GITHUB_TOKEN or `gh auth token`).
+// Token order: the signed-in person's (from the session), else the server's (GITHUB_TOKEN).
+// Everything read here lands in the shared cache, so it must be public: the readers also drop anything private a
+// token might see (private code search hits, private events, isPrivate contributions).
 import { Octokit } from "@octokit/rest";
-import { execSync } from "node:child_process";
 import { workAsyncStorage } from "next/dist/server/app-render/work-async-storage.external";
 
 /**
@@ -9,7 +10,7 @@ import { workAsyncStorage } from "next/dist/server/app-render/work-async-storage
  * "use cache" clears every AsyncLocalStorage before it runs, but restores Next's work store, so the request is
  * found through that store. The token stays out of the cache key: results are public and shared by everyone.
  */
-type Viewer = { token?: string; serverFailed: boolean };
+type Viewer = { token?: string; login?: string; serverFailed: boolean };
 const viewers = new WeakMap<object, Viewer>();
 function viewer(): Viewer | undefined {
   const store = workAsyncStorage.getStore();
@@ -19,15 +20,16 @@ function viewer(): Viewer | undefined {
   return v;
 }
 
-/** Called once per request, outside any cache, with the session's token (or none to use the server's). */
-export function setViewerToken(token: string | undefined) {
+/** Called once per request, outside any cache, with the session's token and login (or none to use the server's). */
+export function setViewerToken(token: string | undefined, login?: string) {
   const v = viewer();
-  if (v) v.token = token;
+  if (v) Object.assign(v, { token, login });
 }
 
-/** True when this request hit a limit or auth error on the server's token, or the server has no token at all. */
+/** True when nobody is signed in and this request hit a limit or auth error on the server's token, or it has none. */
 export function serverTokenFailed(): boolean {
-  return viewer()?.serverFailed ?? false;
+  const v = viewer();
+  return Boolean(v && !v.token && v.serverFailed);
 }
 
 /** Rate limits (primary and secondary) and bad credentials: the token, not the request, is the problem. */
@@ -40,14 +42,8 @@ let server: Octokit | undefined;
 let authed = false;
 function serverClient(): Octokit {
   if (server) return server;
-  let auth = process.env.GITHUB_TOKEN;
-  if (!auth) {
-    try {
-      auth = execSync("gh auth token", { encoding: "utf8" }).trim();
-    } catch {
-      /* unauthenticated: low rate limits */
-    }
-  }
+  // No fallback to the GitHub CLI's token: it usually has the repo scope, and private data must not reach the cache.
+  const auth = process.env.GITHUB_TOKEN || undefined;
   authed = Boolean(auth);
   server = new Octokit({ auth, userAgent: "vouch-explorer" });
   server.hook.error("request", (err) => {
@@ -72,9 +68,14 @@ function userClient(token: string): Octokit {
   return c;
 }
 
-export function octokit(): Octokit {
-  const token = viewer()?.token;
-  return token ? userClient(token) : serverClient();
+/**
+ * The client for this request. `subject` is the login being read: GitHub may count a person's private
+ * contributions when they read their own, so those reads use the server's token instead of theirs.
+ */
+export function octokit(subject?: string): Octokit {
+  const v = viewer();
+  if (!v?.token || (subject && v.login?.toLowerCase() === subject.toLowerCase())) return serverClient();
+  return userClient(v.token);
 }
 
 /** GraphQL rejects unauthenticated calls with 403, which withRetry would mistake for a rate limit. */

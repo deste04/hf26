@@ -82,7 +82,7 @@ export async function userCommitCounts(login: string): Promise<Record<string, nu
   cacheLife("hours");
   cacheTag(personTag(login));
   const { data } = await withRetry(
-    () => octokit().search.commits({ q: `author:${login}`, sort: "author-date", order: "desc", per_page: 100 }),
+    () => octokit(login).search.commits({ q: `author:${login} is:public`, sort: "author-date", order: "desc", per_page: 100 }),
     1,
   );
   const counts: Record<string, number> = {};
@@ -124,7 +124,7 @@ async function repoActivityYear(login: string, year: number, past: boolean): Pro
   if (past) cacheLife("days");
   else cacheLife("hours");
   cacheTag(personTag(login));
-  type ByRepo = { repository: { nameWithOwner: string }; contributions: { totalCount: number } }[];
+  type ByRepo = { repository: { nameWithOwner: string; isPrivate: boolean }; contributions: { totalCount: number } }[];
   type Res = {
     user: {
       contributionsCollection: {
@@ -137,14 +137,14 @@ async function repoActivityYear(login: string, year: number, past: boolean): Pro
   };
   const res = await withRetry(
     () =>
-      octokit().graphql<Res>(
+      octokit(login).graphql<Res>(
         `query($login: String!, $from: DateTime!, $to: DateTime!) {
           user(login: $login) {
             contributionsCollection(from: $from, to: $to) {
-              commitContributionsByRepository(maxRepositories: 100) { repository { nameWithOwner } contributions { totalCount } }
-              pullRequestContributionsByRepository(maxRepositories: 100) { repository { nameWithOwner } contributions { totalCount } }
-              issueContributionsByRepository(maxRepositories: 100) { repository { nameWithOwner } contributions { totalCount } }
-              pullRequestReviewContributionsByRepository(maxRepositories: 100) { repository { nameWithOwner } contributions { totalCount } }
+              commitContributionsByRepository(maxRepositories: 100) { repository { nameWithOwner isPrivate } contributions { totalCount } }
+              pullRequestContributionsByRepository(maxRepositories: 100) { repository { nameWithOwner isPrivate } contributions { totalCount } }
+              issueContributionsByRepository(maxRepositories: 100) { repository { nameWithOwner isPrivate } contributions { totalCount } }
+              pullRequestReviewContributionsByRepository(maxRepositories: 100) { repository { nameWithOwner isPrivate } contributions { totalCount } }
             }
           }
         }`,
@@ -156,7 +156,8 @@ async function repoActivityYear(login: string, year: number, past: boolean): Pro
   const c = res.user.contributionsCollection;
   const out: Record<string, RepoCounts> = {};
   const add = (list: ByRepo, field: keyof RepoCounts) => {
-    for (const r of list) (out[r.repository.nameWithOwner] ??= { commits: 0, prs: 0, issues: 0, reviews: 0 })[field] += r.contributions.totalCount;
+    // Private repos the token can see stay out: this result is cached for everyone.
+    for (const r of list) if (!r.repository.isPrivate) (out[r.repository.nameWithOwner] ??= { commits: 0, prs: 0, issues: 0, reviews: 0 })[field] += r.contributions.totalCount;
   };
   add(c.commitContributionsByRepository, "commits");
   add(c.pullRequestContributionsByRepository, "prs");
@@ -195,7 +196,7 @@ async function graphqlCalendar(login: string, year: number | undefined, past: bo
   };
   const res = await withRetry(
     () =>
-      octokit().graphql<Res>(
+      octokit(login).graphql<Res>(
         `query($login: String!, $from: DateTime, $to: DateTime) {
           user(login: $login) {
             contributionsCollection(from: $from, to: $to) {

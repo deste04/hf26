@@ -67,7 +67,7 @@ export function safeNext(next: string | null | undefined): string {
 /** Reads GitHub as the signed-in person for the rest of this request, or as the server when nobody is. */
 export async function readAsViewer(): Promise<Session | null> {
   const session = await getSession();
-  setViewerToken(session?.token);
+  setViewerToken(session?.token, session?.login);
   return session;
 }
 
