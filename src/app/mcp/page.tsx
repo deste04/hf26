@@ -40,11 +40,6 @@ export default function McpPage() {
         assistants to call outside tools. Once you connect it, you can ask your chat about vouch lists in plain words and
         it answers with the same data as the graph, read live from GitHub.
       </p>
-      <ul>
-        <li>&ldquo;Has anyone denounced @someone? Who, and with what note?&rdquo;</li>
-        <li>&ldquo;Who did ghostty-org/ghostty denounce this year?&rdquo;</li>
-        <li>&ldquo;Where does @pluiedev contribute, and which of those projects vouched for them?&rdquo;</li>
-      </ul>
 
       <h2>Server address</h2>
       <CodeBlock code={MCP_URL} filename="MCP server" language="text" />
@@ -74,14 +69,8 @@ export default function McpPage() {
       </ul>
       <p>
         Check that it&apos;s connected with <span className="mono">claude mcp list</span>, or type{" "}
-        <span className="mono">/mcp</span> in a new Claude Code session to see its status and tools. Then ask as you
-        normally would:
+        <span className="mono">/mcp</span> in a new Claude Code session to see its status and tools.
       </p>
-      <ul>
-        <li>&ldquo;Has anyone denounced @someone? Who, and with what note?&rdquo;</li>
-        <li>&ldquo;Who did ghostty-org/ghostty denounce this year?&rdquo;</li>
-        <li>&ldquo;Where does @pluiedev contribute, and which of those projects vouched for them?&rdquo;</li>
-      </ul>
       <p>
         Claude asks for permission the first time it calls a tool. To remove it:{" "}
         <span className="mono">claude mcp remove vouch-explorer</span>.
@@ -105,6 +94,14 @@ export default function McpPage() {
         Add this to <span className="mono">.vscode/mcp.json</span>:
       </p>
       <CodeBlock code={VSCODE} filename=".vscode/mcp.json" language="json" />
+
+      <h2>Example questions</h2>
+      <p>Once it&apos;s connected, ask as you normally would:</p>
+      <ul>
+        <li>&ldquo;Has anyone denounced @someone? Who, and with what note?&rdquo;</li>
+        <li>&ldquo;Who did ghostty-org/ghostty denounce this year?&rdquo;</li>
+        <li>&ldquo;Where does @pluiedev contribute, and which of those projects vouched for them?&rdquo;</li>
+      </ul>
 
       <h2>Tools</h2>
       <h3 className="mono">trust_lookup</h3>
