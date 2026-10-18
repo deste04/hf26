@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Star } from "lucide-react";
 import { Suspense } from "react";
 import { ExploreEmpty } from "@/components/ExploreEmpty";
@@ -9,6 +10,9 @@ import { cleanQuery } from "@/lib/query";
 
 type Search = Promise<{ q?: string }>;
 
+// Searches (?q=) are the same page: they all point search engines at the home.
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
 /** The shell (title, panels) prerenders; the search, which reads the URL, streams in under Suspense. */
 export default function ExplorePage({ searchParams }: { searchParams: Search }) {
   return (
@@ -18,8 +22,8 @@ export default function ExplorePage({ searchParams }: { searchParams: Search }) 
           <div className="explore-intro">
             <h1 id="explore-title">Check who's trusted before AI slop lands in your PRs</h1>
             <p>
-              Vouch Explorer joins every project's <span className="mono">VOUCHED.td</span> list into one graph. Search a
-              person to see who vouches for them, or a project to see who it trusts.
+              Vouch Explorer joins every project's <span className="mono">VOUCHED.td</span> list into one graph, so you
+              can search a person to see who vouches for them or a project to see who it trusts.
             </p>
           </div>
           <LinkButton href="https://github.com/deste04/hf26" external icon={<Star size={16} className="star-icon" />} className="is-primary">

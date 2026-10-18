@@ -8,14 +8,17 @@ export default function Header() {
   return (
     <SiteHeader>
       <div className="site-header-inner">
-        <Link href="/" className="brand">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-            <circle cx="6" cy="6" r="3" />
-            <circle cx="18" cy="6" r="3" />
-            <circle cx="12" cy="18" r="3" />
-            <path d="M8 8l3 7M16 8l-3 7M9 6h6" />
+        <Link href="/" className="brand" aria-label="Vouch Explorer, home">
+          <svg className="brand-mark" width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
+            <rect width="32" height="32" rx="8" />
+            <path d="M8 16.5l5.5 5.5L24 10" />
+            <circle cx="8" cy="16.5" r="3.1" />
+            <circle cx="13.5" cy="22" r="3.1" />
+            <circle cx="24" cy="10" r="3.1" />
           </svg>
-          <span>Vouch Explorer</span>
+          <span className="brand-name">
+            Vouch<span>Explorer</span>
+          </span>
         </Link>
         <div className="header-tools">
           <AiQueue />

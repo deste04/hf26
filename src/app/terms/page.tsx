@@ -1,6 +1,10 @@
 import Link from "next/link";
 
-export const metadata = { title: "Terms · Vouch Explorer" };
+export const metadata = {
+  title: "Terms",
+  description: "Terms of use for Vouch Explorer, an open-source trust graph built on public VOUCHED.td lists.",
+  alternates: { canonical: "/terms" },
+};
 
 const REPO = "https://github.com/deste04/hf26";
 

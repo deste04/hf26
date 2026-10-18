@@ -1,6 +1,10 @@
 import Link from "next/link";
 
-export const metadata = { title: "Privacy · Vouch Explorer" };
+export const metadata = {
+  title: "Privacy",
+  description: "What Vouch Explorer reads, stores and sends: public GitHub data only, a session cookie when you sign in.",
+  alternates: { canonical: "/privacy" },
+};
 
 const REPO = "https://github.com/deste04/hf26";
 

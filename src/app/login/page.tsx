@@ -12,7 +12,7 @@ const ERRORS: Record<string, string> = {
   limit: "This server has used up its GitHub requests. Sign in to keep going with your own account.",
 };
 
-export const metadata = { title: "Sign in · Vouch Explorer" };
+export const metadata = { title: "Sign in", robots: { index: false } };
 
 /** Only the sign-in card. It reads the session cookie (someone signed in goes to their profile), so it streams in under Suspense. */
 export default function LoginPage({ searchParams }: { searchParams: Search }) {

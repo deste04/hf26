@@ -135,8 +135,14 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
 }
 @media (max-width: 640px) { .site-header-inner { padding: var(--space-3) var(--space-4); } }
 @media (prefers-reduced-motion: reduce) { .site-header { transition: none; } }
-.brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-display); font-weight: 600; font-size: var(--text-lg); letter-spacing: var(--tracking-display); text-decoration: none; }
-.brand svg { color: var(--accent); }
+.brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-display); font-weight: 600; font-size: var(--text-xl); letter-spacing: var(--tracking-display); text-decoration: none; }
+/* The mark matches src/app/icon.svg: a check drawn as three linked nodes, on an accent tile. */
+.brand-mark { flex: none; }
+.brand-mark rect { fill: var(--accent); }
+.brand-mark path { fill: none; stroke: var(--accent-foreground); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.brand-mark circle { fill: var(--accent-foreground); }
+.brand-name { display: inline-flex; align-items: baseline; gap: .3em; line-height: 1; }
+.brand-name span { font-weight: 400; color: var(--text-secondary); }
 .header-tools { display: flex; align-items: center; gap: var(--space-2); }
 /* Signed out, a button as tall as the AI queue beside it; signed in, a larger round avatar that opens the account menu. */
 .account-btn { height: 38px; min-height: 38px; border-radius: 12px; padding: 0 var(--space-3); }

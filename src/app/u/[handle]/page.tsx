@@ -1,3 +1,4 @@
+import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
@@ -15,6 +16,19 @@ import "./profile.css";
 
 type Params = Promise<{ handle: string }>;
 const plural = (n: number) => (n === 1 ? "" : "s");
+
+/** From the handle alone, with no GitHub read, so the title doesn't wait on the profile. */
+export async function generateMetadata({ params }: { params: Params }, parent: ResolvingMetadata): Promise<Metadata> {
+  const login = cleanQuery(decodeURIComponent((await params).handle));
+  const path = `/u/${encodeURIComponent(login)}`;
+  const description = `Where @${login} is vouched for or denounced across open-source projects, with their public GitHub activity.`;
+  return {
+    title: `@${login}`,
+    description,
+    alternates: { canonical: path },
+    openGraph: { title: `@${login} · Vouch Explorer`, description, url: path, type: "profile", images: (await parent).openGraph?.images },
+  };
+}
 
 /** The handle comes from the URL, so the profile streams in under Suspense (Cache Components). */
 export default function ProfilePage({ params }: { params: Params }) {
