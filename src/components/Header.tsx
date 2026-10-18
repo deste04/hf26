@@ -1,13 +1,12 @@
 import Link from "next/link";
 import AccountMenu from "./AccountMenu";
 import AiQueue from "./AiQueue";
-import { Suspense } from "react";
-import NavLinks, { NavLinksFallback } from "./NavLinks";
+import { SiteHeader } from "./SiteHeader";
 import { ThemeToggle } from "./ThemeToggle";
 
 export default function Header() {
   return (
-    <header className="site-header">
+    <SiteHeader>
       <div className="site-header-inner">
         <Link href="/" className="brand">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -18,15 +17,12 @@ export default function Header() {
           </svg>
           <span>Vouch Explorer</span>
         </Link>
-        <Suspense fallback={<NavLinksFallback />}>
-          <NavLinks />
-        </Suspense>
         <div className="header-tools">
           <AiQueue />
           <ThemeToggle />
           <AccountMenu />
         </div>
       </div>
-    </header>
+    </SiteHeader>
   );
 }

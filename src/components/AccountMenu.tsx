@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/arc/avatar/avatar";
 import { Button } from "@/components/arc/button/button";
+import { GithubMark } from "@/components/LinkButton";
 import type { SessionUser } from "@/server/session";
 
 /** Header account: "Sign in" when signed out; signed in, the avatar opens a menu with the account, the profile and sign out. */
@@ -44,8 +45,9 @@ export default function AccountMenu() {
   if (!me)
     return (
       // A plain link: a prefetched /login from while signed in would replay its redirect to the profile.
-      <a href="/login" className="link-btn account-btn">
-        Sign in
+      <a href="/login" className="account-btn is-signin">
+        <GithubMark size={16} />
+        <span>Sign in</span>
       </a>
     );
   const name = me.name || me.login;
