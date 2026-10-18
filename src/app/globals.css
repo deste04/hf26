@@ -277,6 +277,7 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
 }
 
 .result-head { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.result-stats { display: flex; flex-wrap: wrap; column-gap: var(--space-3); }
 .result-head h2 { margin: 0; font-size: var(--text-lg); overflow-wrap: anywhere; }
 .tone-success { color: var(--success); }
 .tone-danger { color: var(--danger); }
