@@ -36,21 +36,21 @@ h1, h2, h3 { margin: 0 0 var(--space-2); font-weight: 600; line-height: 1.2; }
 h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); }
 
 /* The world in dots (public/world-dots.svg, from scripts/world-dots.mjs) used as a mask, so its colour is a token.
-   It lies tilted back in perspective, whole, between the header (68px) and the page's first card, fading in from
-   left to right and towards the near edge. */
+   It hangs from the very top of the page, tilted in perspective (north near, south receding), fading in from left
+   to right and towards the far edge. */
 .page-world {
-  position: absolute; top: 68px; right: var(--space-6); z-index: -1;
+  position: absolute; top: 0; right: var(--space-6); z-index: -1;
   width: min(900px, calc(100% - 2 * var(--space-4))); height: min(262px, 36vw);
   perspective: 900px; perspective-origin: 50% 0; pointer-events: none;
 }
 .page-world::before {
-  content: ""; position: absolute; left: 0; right: 0; bottom: 0; aspect-ratio: 121 / 62;
-  transform: rotateX(42deg); transform-origin: 50% 100%;
+  content: ""; position: absolute; left: 0; right: 0; top: 0; aspect-ratio: 121 / 61.25;
+  transform: rotateX(-30deg); transform-origin: 50% 0;
   background: var(--border-strong);
   mask:
     url(/world-dots.svg) center / contain no-repeat,
     linear-gradient(to right, transparent, #000 55%),
-    linear-gradient(to bottom, rgb(0 0 0 / .5), #000);
+    linear-gradient(to bottom, #000, rgb(0 0 0 / .5));
   mask-composite: intersect;
 }
 /* Small dots on a dark page need a lighter tone to read as a texture at all. */
