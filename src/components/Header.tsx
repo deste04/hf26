@@ -1,6 +1,5 @@
 import Link from "next/link";
 import AccountMenu from "./AccountMenu";
-import AiQueue from "./AiQueue";
 import { SiteHeader } from "./SiteHeader";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -21,7 +20,9 @@ export default function Header() {
           </span>
         </Link>
         <div className="header-tools">
-          <AiQueue />
+          <Link href="/mcp" className="link-btn header-link">
+            MCP
+          </Link>
           <ThemeToggle />
           <AccountMenu />
         </div>

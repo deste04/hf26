@@ -26,7 +26,7 @@ Vouch Explorer joins those lists into one graph. Look up a person or a repo and 
 | --- | --- |
 | **Explore** `/` | The trust graph for a GitHub user or an `owner/repo`, with fullscreen, fit, and a link to the profile. |
 | **Profile** `/u/:handle` | The AI contribution brief with linked evidence, the vouch facts, and activity per project. |
-| **AI queue** (header) | Every model job, running or queued, with a **Cancel** button. Closing a profile cancels its brief. |
+| **MCP** `/mcp` | How to connect the MCP server to an AI chat, and what its tools return. |
 
 ### AI rules
 
@@ -58,6 +58,21 @@ npm test                # parser and AI grounding tests
 
 - Repo lookups (`owner/repo`) work without a token. Person lookups need `GITHUB_TOKEN`, because GitHub code search refuses anonymous calls.
 - `GET /api/trust?q=<handle|owner/repo>` returns the same data as JSON.
+
+## Use it from an AI chat (MCP)
+
+`/api/mcp` is an [MCP](https://modelcontextprotocol.io) server (Streamable HTTP, stateless, read-only). Add `https://vouchexplorer.vercel.app/api/mcp` as a custom connector in Claude, ChatGPT, Cursor or any MCP client (setup for each is on the [MCP page](https://vouchexplorer.vercel.app/mcp)), then ask things like "has anyone denounced @foo?" or "who vouched for people in ghostty-org/ghostty?".
+
+| Tool | Returns |
+| --- | --- |
+| `trust_lookup` | Vouch list entries for a person or an `owner/repo`, with voucher, note and commit URL. Optional `status` filter. |
+| `contributor_activity` | Public profile, contributions per repo with vouch status, and recent PRs, reviews and issues with their URLs. |
+
+The chat's own model writes the answer, so no Groq call is made. The server's instructions carry the same AI rules: no score, no recommendation, only the URLs the tools return. Calls read GitHub with the server's `GITHUB_TOKEN`.
+
+```bash
+claude mcp add --transport http vouch-explorer https://vouchexplorer.vercel.app/api/mcp
+```
 
 ## Limits
 
