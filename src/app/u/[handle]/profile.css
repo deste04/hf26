@@ -25,10 +25,25 @@
 @media (max-width: 640px) { .profile-chart { padding: var(--space-4); } }
 
 /* Contribution brief */
-.brief-title { display: flex; align-items: flex-start; gap: var(--space-3); }
-.brief-title h2 { margin: 0; }
-.brief-title p { margin: 2px 0 0; }
-.brief-ai-icon { flex: none; margin-top: 4px; color: var(--accent); }
+/* The brief card: a faint accent glow from the top corner and a hairline of light along its top edge. */
+.brief-card {
+  position: relative; overflow: hidden; container: brief / inline-size;
+  background:
+    radial-gradient(90% 60% at 0% 0%, color-mix(in oklab, var(--accent) 7%, transparent), transparent 70%),
+    var(--surface);
+}
+.brief-card::before {
+  content: ""; position: absolute; inset: 0 0 auto; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--accent) 70%, transparent) 30%, color-mix(in oklab, var(--series-2) 60%, transparent) 70%, transparent);
+}
+.profile-section .brief-title {
+  margin: 0; font-family: var(--font-display); font-size: var(--text-xl); font-weight: 600; letter-spacing: var(--tracking-display); line-height: 1.2;
+}
+.brief-ai {
+  background: linear-gradient(120deg, var(--accent), var(--series-2));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+@media (forced-colors: active) { .brief-ai { background: none; -webkit-text-fill-color: currentColor; } }
 .brief-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
 .brief-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 /* Regenerate: the arrow turns half a lap on hover and keeps turning while a new brief is written. */
@@ -39,52 +54,42 @@
 @media (prefers-reduced-motion: reduce) { .regen-btn .regen-icon { transition: none; animation: none !important; } }
 .brief-lead { display: grid; gap: var(--space-3); }
 .brief-summary { margin: 0; font-size: var(--text-base); line-height: 1.6; max-width: 72ch; }
-.brief-block { display: flex; flex-direction: column; gap: var(--space-3); }
+/* Evidence and what the data lacks: side by side when the card is wide, below a divider from the summary. */
+.brief-body {
+  display: grid; gap: var(--space-6);
+  padding-top: var(--space-5); border-top: 1px solid var(--border-subtle);
+}
+@container brief (min-width: 760px) { .brief-body { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--space-8); } }
+.brief-block { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
 .brief-block h3 { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: var(--text-sm); font-weight: 600; }
 .brief-count {
   min-width: 1.5em; padding: 0 6px; border-radius: var(--radius-pill); background: var(--surface-muted);
   color: var(--text-secondary); font-size: var(--text-xs); font-weight: 500; text-align: center; font-variant-numeric: tabular-nums;
 }
-.evidence-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
-.evidence-row {
-  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: var(--space-3);
-  padding: var(--space-3) var(--space-4); background: var(--surface-muted); border-radius: var(--radius-control);
-}
+/* Evidence rows are separated by hairlines rather than boxed, so four of them read as one list. */
+.evidence-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.evidence-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--border-subtle); }
+.evidence-row:first-child { border-top: 0; padding-top: 0; }
 .evidence-icon { margin-top: 3px; color: var(--accent); }
+.evidence-body { display: grid; gap: 2px; }
 .evidence-text { line-height: 1.5; }
-.evidence-link { margin-top: 2px; font-size: var(--text-xs); white-space: nowrap; }
-@media (max-width: 520px) {
-  .evidence-row { grid-template-columns: auto minmax(0, 1fr); }
-  .evidence-link { grid-column: 2; }
-}
-.brief-gaps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); color: var(--text-secondary); }
-.brief-gaps li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2); align-items: start; }
-.brief-gaps svg { margin-top: 3px; color: var(--text-muted); }
+.evidence-link { justify-self: start; font-size: var(--text-xs); color: var(--text-secondary); }
+.brief-gaps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); color: var(--text-secondary); }
+.brief-gaps li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2); align-items: start; line-height: 1.5; }
+.brief-gaps svg { margin-top: 4px; color: var(--text-muted); }
 .brief-areas { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.brief-footer {
-  display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2) var(--space-6);
-  margin: 0; font-size: var(--text-xs); color: var(--text-secondary); border-top: 1px solid var(--border-subtle); padding-top: var(--space-3);
-}
-.brief-footer p { margin: 0; }
-.brief-footer p:first-child { flex: 1 1 320px; }
-.brief-meta { color: var(--text-muted); }
 
 .profile-table { min-width: 600px; }
 .activity-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
 .activity-head h2 { margin: 0; }
 .profile-table td:not(:first-child), .profile-table th:not(:first-child) { font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-.brief-vouch {
-  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-3); padding: var(--space-4);
-  border-radius: var(--radius-control); background: color-mix(in oklab, var(--success) 8%, var(--surface));
-  border: 1px solid color-mix(in oklab, var(--success) 22%, var(--border));
-}
-.brief-vouch.is-warn { background: color-mix(in oklab, var(--danger) 7%, var(--surface)); border-color: color-mix(in oklab, var(--danger) 26%, var(--border)); }
-.brief-vouch-icon { margin-top: 1px; color: var(--success); }
+/* What the vouch lists say: one quiet line, tinted only by its icon, red when someone was denounced. */
+.brief-vouch { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2); align-items: start; margin: 0; font-size: var(--text-sm); }
+.brief-vouch-icon { margin-top: 3px; color: var(--success); }
+.brief-vouch.is-warn { color: var(--danger); }
 .brief-vouch.is-warn .brief-vouch-icon { color: var(--danger); }
-.brief-vouch h3 { margin: 0 0 2px; font-size: var(--text-xs); font-weight: 500; color: var(--text-secondary); }
-.brief-vouch p { margin: 0; font-size: var(--text-sm); }
-.brief-source { display: block; margin-top: var(--space-1); font-size: var(--text-xs); color: var(--text-muted); }
+.brief-source { font-size: var(--text-xs); color: var(--text-muted); }
 
 /* Year switch beside the heatmap summary; the label stays for screen readers only. */
 .heatmap-year { width: 9rem; }

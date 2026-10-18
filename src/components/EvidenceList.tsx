@@ -18,10 +18,12 @@ export function EvidenceList({ items }: { items: { text: string; evidence_url: s
           ) : (
             <CircleDot className="evidence-icon" size={16} aria-label="Issue" />
           )}
-          <span className="evidence-text">{s.text}</span>
-          <a href={s.evidence_url} target="_blank" rel="noreferrer" className="mono evidence-link">
-            {evidenceLabel(s.evidence_url)}
-          </a>
+          <div className="evidence-body">
+            <span className="evidence-text">{s.text}</span>
+            <a href={s.evidence_url} target="_blank" rel="noreferrer" className="mono evidence-link">
+              {evidenceLabel(s.evidence_url)}
+            </a>
+          </div>
         </li>
       ))}
     </ul>

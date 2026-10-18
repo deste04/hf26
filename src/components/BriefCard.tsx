@@ -1,6 +1,6 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BrainCircuit, CircleDashed, ListChecks, RotateCw } from "lucide-react";
+import { CircleDashed, ListChecks, RotateCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { Alert } from "@/components/arc/alert/alert";
@@ -43,16 +43,16 @@ export function BriefCard({ login }: { login: string }) {
   return (
     <section className="card profile-section brief-card" aria-labelledby="brief-title" aria-busy={loading}>
       <div className="brief-head">
-        <div className="brief-title">
-          <BrainCircuit className="brief-ai-icon" size={18} aria-hidden="true" />
-          <div>
-            {/* The light sweeps across the title while the model writes, then settles on it. */}
-            <TextShimmer as="h2" id="brief-title" active={loading}>
-              {loading ? "AI is writing the brief" : "AI brief"}
-            </TextShimmer>
-            <p className="muted small">Written by an AI model from public GitHub activity</p>
-          </div>
-        </div>
+        {/* While the model writes, a light sweeps across the title; once done, "AI" carries the accent gradient. */}
+        {loading ? (
+          <TextShimmer as="h2" id="brief-title" className="brief-title">
+            AI is writing the brief
+          </TextShimmer>
+        ) : (
+          <h2 id="brief-title" className="brief-title">
+            <span className="brief-ai">AI</span> brief
+          </h2>
+        )}
         <div className="brief-actions">
           {/* While a new brief is being written the same button cancels it, through the abort controller above. */}
           <Button
@@ -111,46 +111,36 @@ export function BriefCard({ login }: { login: string }) {
           </div>
           {res.data.vouch_lists && (
             // Built from the vouch lists, not by the model: it says so, since the card around it is the AI's.
-            <div className={`brief-vouch${/denounc/i.test(res.data.vouch_lists) ? " is-warn" : ""}`}>
-              <ListChecks className="brief-vouch-icon" size={18} aria-hidden="true" />
-              <div>
-                <h3>What maintainers&apos; vouch lists say</h3>
-                <p>{res.data.vouch_lists}</p>
-                <span className="brief-source">From the VOUCHED.td files, not written by AI</span>
-              </div>
-            </div>
+            <p className={`brief-vouch${/denounc/i.test(res.data.vouch_lists) ? " is-warn" : ""}`}>
+              <ListChecks className="brief-vouch-icon" size={16} aria-hidden="true" />
+              <span>
+                {res.data.vouch_lists} <span className="brief-source">From VOUCHED.td files, not written by AI.</span>
+              </span>
+            </p>
           )}
-          <div className="brief-block">
-            <h3>
-              Evidence <span className="brief-count">{res.data.strengths.length}</span>
-            </h3>
-            <EvidenceList items={res.data.strengths} />
-          </div>
-          {res.data.gaps.length > 0 && (
+          <div className="brief-body">
             <div className="brief-block">
-              <h3>What the data does not show</h3>
-              <ul className="brief-gaps">
-                {res.data.gaps.map((g, i) => (
-                  <li key={i}>
-                    <CircleDashed size={14} aria-hidden="true" />
-                    <span>{g}</span>
-                  </li>
-                ))}
-              </ul>
+              <h3>
+                Evidence <span className="brief-count">{res.data.strengths.length}</span>
+              </h3>
+              <EvidenceList items={res.data.strengths} />
             </div>
-          )}
+            {res.data.gaps.length > 0 && (
+              <div className="brief-block brief-gaps-block">
+                <h3>Not in the data</h3>
+                <ul className="brief-gaps">
+                  {res.data.gaps.map((g, i) => (
+                    <li key={i}>
+                      <CircleDashed size={14} aria-hidden="true" />
+                      <span>{g}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </>
       )}
-
-      <footer className="brief-footer">
-        <p>Check the linked evidence before relying on it. This brief is not a score and never vouches or denounces anyone: maintainers decide.</p>
-        {!loading && res?.ok && (
-          <p className="brief-meta">
-            <span className="mono">{res.model}</span> · {res.cached ? "cached" : "generated"}{" "}
-            <time dateTime={res.created_at}>{new Date(res.created_at).toLocaleString()}</time>
-          </p>
-        )}
-      </footer>
     </section>
   );
 }
