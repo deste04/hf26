@@ -412,7 +412,9 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
 .scrollspy-track { padding: 0 12px; border-radius: 14px; background: var(--surface); cursor: grab; touch-action: none; user-select: none; }
 .scrollspy-track:active { cursor: grabbing; }
 .scrollspy-ticks { position: relative; display: flex; align-items: center; justify-content: space-between; height: 40px; }
-.scrollspy-tick { width: 1px; height: 15px; background: var(--foreground); }
+.scrollspy-tick { width: 1px; height: 9px; background: var(--foreground); opacity: .2; }
+/* Where each section starts, centred under the thumb's centre at that point. */
+.scrollspy-mark { position: absolute; top: 12.5px; width: 1px; height: 15px; margin-left: -.5px; background: var(--foreground); }
 .scrollspy-thumb { position: absolute; left: 0; top: 8px; width: 6px; height: 24px; border-radius: var(--radius-pill); background: var(--accent); will-change: transform; }
 .scrollspy-thumb.is-hover { opacity: .3; }
 
