@@ -323,6 +323,37 @@ h1 { font-family: var(--font-display); letter-spacing: var(--tracking-display); 
   font-size: var(--text-sm); font-weight: 500; opacity: 0; transition: opacity var(--duration-fast) var(--ease-standard);
 }
 .graph-zoom-hint.is-visible { opacity: .92; }
+/* Explore before a search: a sketch of the graph beside how to read it and searches to start from. */
+.explore-start { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: var(--space-6); min-height: 340px; }
+.explore-start-copy { display: grid; gap: var(--space-4); max-width: 52ch; }
+.explore-start-copy h2 { margin: 0; font-size: var(--text-xl); }
+.explore-start-copy p { margin: 0; color: var(--text-secondary); }
+.explore-start-copy .legend { margin-top: 0; }
+.explore-start-examples { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.explore-start-chip {
+  display: inline-flex; align-items: center; min-height: 32px; padding: 0 var(--space-3); border: 1px solid var(--border);
+  border-radius: var(--radius-pill); background: var(--surface-muted); color: var(--foreground); font-size: var(--text-sm); text-decoration: none;
+  transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
+}
+.explore-start-chip .mono { font-size: var(--text-xs); }
+.explore-start-chip:hover { border-color: var(--border-strong); background: var(--surface); }
+.explore-start-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.explore-start-art { width: 100%; max-width: 440px; height: auto; justify-self: center; overflow: visible; }
+.explore-start-art .explore-start-node-label { fill: var(--text-muted); font-family: var(--font-mono); font-size: 11px; animation: explore-start-in .4s var(--ease-standard) both; }
+.explore-start-art line { stroke: var(--success); stroke-width: 2; stroke-linecap: round; animation: explore-start-in .5s var(--ease-standard) both; }
+.explore-start-art line[data-tone="bad"] { stroke: var(--danger); }
+.explore-start-art line[data-tone="activity"] { stroke: var(--text-muted); stroke-dasharray: 1 5; opacity: .7; }
+.explore-start-art circle { fill: var(--success); animation: explore-start-in .4s var(--ease-standard) both; }
+.explore-start-art circle[data-tone="bad"] { fill: var(--danger); }
+.explore-start-art circle[data-tone="activity"] { fill: var(--surface); stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 2 2; }
+.explore-start-center { fill: var(--foreground); }
+.explore-start-center-label { fill: var(--background); font-family: var(--font-body); font-size: 14px; font-weight: 600; }
+@keyframes explore-start-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .explore-start-art line, .explore-start-art circle { animation: none; } }
+@media (max-width: 720px) {
+  .explore-start { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .explore-start-art { order: -1; max-width: 320px; }
+}
 .graph-loader { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-3); min-height: 340px; }
 .graph-loader.is-bare { position: absolute; inset: 0; z-index: 2; min-height: 0; background: var(--surface); }
 .graph-loader-spin {

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Star } from "lucide-react";
 import { Suspense } from "react";
 import { ExploreEmpty } from "@/components/ExploreEmpty";
+import { ExploreStart } from "@/components/ExploreStart";
 import { GraphLoader } from "@/components/GraphLoader";
 import { LinkButton } from "@/components/LinkButton";
 import { SearchBar } from "@/components/SearchBar";
@@ -56,7 +57,7 @@ async function HeroSearch({ searchParams }: { searchParams: Search }) {
 
 async function Results({ searchParams }: { searchParams: Search }) {
   const q = cleanQuery((await searchParams).q ?? "");
-  if (!q) return <ExploreEmpty scene="search" title="Search a person or a project" line="Try @handle or owner/repo." />;
+  if (!q) return <ExploreStart />;
   // The browser fetches the results once the page has loaded. Keyed by the query: clicking a node navigates
   // client-side, and React would otherwise reuse the previous search's component and its table filters.
   return <ExploreResults key={q.toLowerCase()} q={q} />;
