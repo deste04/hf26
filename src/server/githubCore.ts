@@ -82,7 +82,9 @@ function userClient(token: string): Octokit {
         if (!isTokenProblem(err)) throw err;
         const headers = { ...options.headers };
         delete headers.authorization;
-        return serverClient().request({ ...options, headers });
+        // options.request.hook is this client's own hook: kept, it would put their token back and retry as them.
+        const { hook: _, ...rest } = options.request ?? {};
+        return serverClient().request({ ...options, headers, request: rest });
       }
     });
     userClients.set(token, c);
